@@ -1,0 +1,54 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: dsh-java-ontology
+  jackson:
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+  datasource:
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:ontology_db}?useUnicode=true&characterEncoding=utf8mb4&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: OntologyHikariPool
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    encoding: UTF-8
+    table: sys_flyway_schema_history
+
+dsh:
+  # 应用层元信息（app 层专属前缀，业务配置 dsh.ontology.* 由 flow 层绑定）
+  app:
+    name: dsh-onto-app
+    version: 0.2.1
+    description: 聚合应用：打包 dsh-onto-base/flow/report/visulization 四模块
+  ontology:
+    data-directory: ${user.home}/.dsh-java-ontology
+    query-timeout-seconds: 15
+    max-results: 100
+    harness:
+      base-url: ${DSH_HARNESS_BASE_URL:http://127.0.0.1:8090}
+    jwt:
+      secret: ${JWT_SECRET:dsh-java-ontology-secret-key-2026-please-change-in-production-at-least-32-chars}
+      expiration-ms: 86400000
+      header: Authorization
+      prefix: "Bearer "
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

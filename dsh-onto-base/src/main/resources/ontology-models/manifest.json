@@ -1,0 +1,31 @@
+{
+  "model_type": "MANIFEST",
+  "version": "3.0",
+  "platform": "dsh-onto-base",
+  "domain": "通用本体知识库平台",
+  "framework": "ontology_modeling_framework_v9.md",
+  "base_models": [
+    "m1-object-model.yaml",
+    "m2-behavior-model.yaml",
+    "m3-rule-model.yaml",
+    "m5-actor-model.yaml",
+    "m6-flow-model.yaml",
+    "m7-report-model.yaml",
+    "mu-ui-model.yaml"
+  ],
+  "projects": [
+    {
+      "domain": "siis",
+      "name": "全球多语种信息监测与决策分析",
+      "models": [
+        "siis-object.yaml",
+        "siis-behavior.yaml",
+        "siis-rule.yaml",
+        "siis-actor.yaml",
+        "siis-flow.yaml",
+        "siis-report.yaml",
+        "siis-ui.yaml"
+      ]
+    }
+  ]
+}

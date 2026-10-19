@@ -1,0 +1,38 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: dsh-java-ontology-test
+  datasource:
+    url: "jdbc:h2:mem:ontology_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;INIT=CREATE ALIAS IF NOT EXISTS FIND_IN_SET FOR 'net.linlan.dsh.ontology.test.H2Functions.findInSet'"
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    encoding: UTF-8
+    table: sys_flyway_schema_history
+  h2:
+    console:
+      enabled: false
+
+dsh:
+  app:
+    name: dsh-onto-app
+    version: 0.2.1
+    description: 聚合应用测试上下文
+  ontology:
+    data-directory: ${java.io.tmpdir}/dsh-java-ontology-test
+    query-timeout-seconds: 5
+    max-results: 50
+    harness:
+      base-url: http://127.0.0.1:8090
+    jwt:
+      secret: dsh-java-ontology-test-secret-key-for-testing-at-least-32-chars
+      expiration-ms: 3600000
+      header: Authorization
+      prefix: "Bearer "

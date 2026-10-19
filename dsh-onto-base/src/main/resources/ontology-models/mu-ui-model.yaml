@@ -1,0 +1,570 @@
+# MU UI 模型元文件（产品层 base）- mu-ui-model.yaml
+# 通用 UI 框架：主题 + 布局 + 导航框架 + AI助手面板
+# 各项目层通过 siis-ui.yaml 等扩展业务特定导航和页面
+model_type: UI
+version: "3.0"
+domain: "通用本体知识库平台"
+
+# ══════════════════════════════════════════════════════════
+# 全局主题（深色，对齐 OntoFlow）
+# ══════════════════════════════════════════════════════════
+theme:
+  mode: dark
+  colors:
+    bgGlobal: "#0f1419"
+    bgSidebar: "#161b22"
+    bgCanvas: "#0d1117"
+    bgCard: "#21262d"
+    bgPanel: "#1c2128"
+    primaryBlue: "#3b82f6"
+    primaryGreen: "#22c55e"
+    primaryOrange: "#f97316"
+    textPrimary: "#e6edf3"
+    textSecondary: "#8b949e"
+    border: "#30363d"
+    active: "#1f6feb"
+  sizing:
+    sidebarWidth: 220px
+    rightPanelWidth: 340px
+    headerHeight: 50px
+    tabBarHeight: 38px
+    statusBarHeight: 34px
+    cardPadding: 18px
+    cardGap: 50px
+    cardRadius: 10px
+    canvasMargin: 28px
+    fontSizeTitle: 15px
+    fontSizeBody: 13px
+    fontSizeLabel: 12px
+
+# ══════════════════════════════════════════════════════════
+# 全局布局结构
+# ══════════════════════════════════════════════════════════
+layout:
+  structure: |
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │ Header: Logo + 搜索(⌘K) + 用户头像 + 通知 + 设置                      │
+    ├──────────┬──────────────────────────────────────┬──────────────────┤
+    │          │  TabBar: 项目标签 + 工作流标签          │                  │
+    │          ├──────────────────────────────────────┤                  │
+    │  Sidebar │  Toolbar: 撤销/重做 + 添加节点 + 运行/保存/发布│  AI Assistant  │
+    │  (14项)  ├──────────────────────────────────────┤  Panel          │
+    │          │                                        │  (AI工作台/     │
+    │          │  Canvas: 4步流程节点图                  │   查询验证/     │
+    │          │  (多源接入→数据处理→子图建模→本体库)    │   推演验证)     │
+    │          │                                        │                  │
+    ├──────────┴──────────────────────────────────────┴──────────────────┤
+    │ StatusBar: 流程ID + 状态 + 保存时间 + 版本 + 创建人                    │
+    └─────────────────────────────────────────────────────────────────────┘
+
+# ══════════════════════════════════════════════════════════
+# 应用定义
+# ══════════════════════════════════════════════════════════
+application:
+  name: 全球多语种信息监测与决策分析平台
+  header:
+    logo: OntoFlow
+    search:
+      placeholder: 搜索节点/数据/文档
+      shortcut: "⌘K"
+    actions: [notification, settings, help, userProfile]
+  statusbar:
+    fields: [flowId, status, lastSaved, version, creator]
+
+  # ──────────────────────────────────────────────
+  # 左侧边栏导航（14项 + 系统管理，对齐 OntoFlow）
+  # ──────────────────────────────────────────────
+  menus:
+    - { menuId: menu-explore, name: 探索, icon: compass, screenRef: frmExplore }
+    - { menuId: menu-agents, name: 智能体, icon: bot, screenRef: frmAgents }
+    - { menuId: menu-extraction, name: 数据提取, icon: download, screenRef: frmExtraction }
+    - { menuId: menu-assets, name: 数据资产, icon: database, screenRef: frmDataAssets }
+    - menuId: menu-ontology
+      name: 本体建模
+      icon: network
+      screenRef: frmOntologyCanvas
+      children:
+        - { menuId: menu-ont-entity, name: 实体维护, screenRef: frmOntEntityMaintain }
+        - { menuId: menu-ont-country, name: 国家信息, screenRef: frmOntCountryMaintain }
+        - { menuId: menu-ont-org, name: 机构信息, screenRef: frmOntOrgMaintain }
+        - { menuId: menu-ont-person, name: 人物信息, screenRef: frmOntPersonMaintain }
+        - { menuId: menu-ont-search, name: 本体搜索, screenRef: frmOntSearch }
+        - { menuId: menu-ont-i18n, name: 多语种翻译, screenRef: frmOntI18nMaintain }
+    - { menuId: menu-sandbox, name: 推演沙盘, icon: flask, screenRef: frmSandbox, status: planned }
+    - { menuId: menu-twin, name: 孪生应用, icon: copy, screenRef: frmTwinApp, status: planned }
+    - menuId: menu-knowledge
+      name: 知识库
+      icon: book-open
+      screenRef: frmKnowledgeBase
+      children:
+        - { menuId: menu-glb-entity, name: 全局实体, screenRef: frmGlbEntityList }
+        - { menuId: menu-glb-relation, name: 全局关系, screenRef: frmGlbRelationList }
+        - { menuId: menu-glb-kg, name: 统一图谱, screenRef: frmGlbUnifiedKg }
+        - { menuId: menu-glb-log, name: 汇聚日志, screenRef: frmGlbAggLog }
+    - { menuId: menu-graph, name: 图可视化, icon: share-2, screenRef: frmGraphViz }
+    - menuId: menu-materials
+      name: 素材库
+      icon: archive
+      screenRef: frmMaterials
+      children:
+        - { menuId: menu-dsp-report, name: 报告管理, screenRef: frmDspReportList }
+        - { menuId: menu-dsp-template, name: 报告模板, screenRef: frmDspTemplateMaintain }
+        - { menuId: menu-dsp-alert, name: 告警中心, screenRef: frmDspAlertCenter }
+        - { menuId: menu-dsp-publish, name: 信息发布, screenRef: frmDspPublishMaintain }
+        - { menuId: menu-dsp-push, name: 推送记录, screenRef: frmDspPushList }
+        - { menuId: menu-dsp-recommend, name: 推荐列表, screenRef: frmDspRecommendList }
+        - { menuId: menu-dsp-conference, name: 会议信息, screenRef: frmDspConferenceMaintain }
+    - { menuId: menu-models, name: 模型管理, icon: cpu, screenRef: frmModelMgmt }
+    - { menuId: menu-mcp, name: MCP, icon: terminal, screenRef: frmMcp }
+    - { menuId: menu-plugins, name: 插件, icon: puzzle, screenRef: frmPlugins }
+    - menuId: menu-system
+      name: 系统管理
+      icon: settings
+      children:
+        - { menuId: menu-sys-user, name: 用户管理, screenRef: frmSysUserMaintain }
+        - { menuId: menu-sys-role, name: 角色管理, screenRef: frmSysRoleMaintain }
+        - { menuId: menu-sys-column, name: 栏目管理, screenRef: frmSysColumnMaintain }
+        - { menuId: menu-sys-module, name: 模块配置, screenRef: frmSysModuleConfig }
+        - { menuId: menu-sys-log, name: 日志管理, screenRef: frmSysLogMaintain }
+
+  # ──────────────────────────────────────────────
+  # 主画布：4步流程节点图（对齐 OntoFlow 核心布局）
+  # ──────────────────────────────────────────────
+  workflow:
+    flowId: flow-ontology-main
+    flowName: 全流程主链路（全球多语种监测）
+    toolbar:
+      actions: [undo, redo, refresh, addNode, autoAlign, run, save, publish]
+    nodes:
+      - nodeId: node-1-ingest
+        name: 多源接入
+        color: primaryBlue
+        icon: cloud
+        phaseRef: Phase 10
+        items:
+          - { label: 结构化库, desc: MySQL/PostgreSQL 业务数据 }
+          - { label: 外部接口, desc: REST API / 第三方数据源 }
+          - { label: 网页采集, desc: CrawlEngine 定时爬取 }
+          - { label: 业务事件, desc: 告警触发 / 主题创建 }
+          - { label: 实时流, desc: WebSocket / 消息队列 }
+      - nodeId: node-2-process
+        name: 数据处理
+        color: primaryGreen
+        icon: settings
+        phaseRef: Phase 11
+        items:
+          - { label: 字段清洗, desc: 去噪 / 编码统一 }
+          - { label: 语种识别, desc: 8语种自动检测 }
+          - { label: 本体匹配, desc: OntologyMatcher 实体对齐 }
+          - { label: 图谱归一化, desc: KgNormalizer 关系标准化 }
+          - { label: 情感分析, desc: 情感极性标注 }
+      - nodeId: node-3-model
+        name: 子图建模
+        color: primaryOrange
+        icon: network
+        phaseRef: Phase 3+7
+        items:
+          - { label: 实体建模, desc: 13本体实体 + 38业务实体 }
+          - { label: 关系建模, desc: 双边关系 / 知识图谱边 }
+          - { label: 汇总指标, desc: 告警统计 / 报告指标 }
+          - { label: 行动空间, desc: 实体晋升 / 报告生成 }
+      - nodeId: node-4-library
+        name: 本体库(发布)
+        color: primaryGreen
+        icon: package
+        phaseRef: Phase 12+13+14
+        items:
+          - { label: 三级架构发布, desc: 个人→共享→统一 }
+          - { label: 查询服务, desc: 15 Tool / 106 API端点 }
+          - { label: Skill & Agent, desc: 4 Skill + 3 Agent }
+          - { label: 版本管理, desc: Flyway 迁移 / 审计日志 }
+    edges:
+      - { source: node-1-ingest, target: node-2-process }
+      - { source: node-2-process, target: node-3-model }
+      - { source: node-3-model, target: node-4-library }
+
+  # ──────────────────────────────────────────────
+  # 右侧 AI 助手面板（对齐 OntoFlow）
+  # ──────────────────────────────────────────────
+  aiAssistant:
+    title: AI 助手
+    tabs:
+      - { tabId: tab-workspace, name: AI工作台, agentRef: director-assistant }
+      - { tabId: tab-query, name: 查询验证, agentRef: research-assistant }
+      - { tabId: tab-deduce, name: 推演验证, status: planned }
+    quickActions:
+      - { actionId: qa-hotspot, label: 热点区域分析, skillRef: hotspot-analysis }
+      - { actionId: qa-topic, label: 创建监测主题, skillRef: topic-creation }
+      - { actionId: qa-report, label: 生成分析报告, skillRef: report-generation }
+      - { actionId: qa-extract, label: 知识抽取, skillRef: knowledge-extraction }
+    recentSessions:
+      - { title: 热点区域分析-中东局势, time: 2026-10-14 10:30 }
+      - { title: 双边关系查询-中美贸易, time: 2026-10-14 09:15 }
+      - { title: 报告生成- weekly briefing, time: 2026-10-13 18:00 }
+    input:
+      placeholder: 输入您的需求...
+
+# ══════════════════════════════════════════════════════════
+# Screen 定义
+# ══════════════════════════════════════════════════════════
+screens:
+  # ──────────────────────────────────────────────
+  # 探索（仪表盘首页）
+  # ──────────────────────────────────────────────
+  - screenId: frmExplore
+    name: 探索首页
+    screenType: DASHBOARD
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 探索首页                                                     │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @statCards                                                   │
+      │  [文章总数] [主题数] [告警数] [报告数] [本体实体数] [覆盖率] │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @chartRow1                                                   │
+      │  [采集趋势折线图]        [语种分布饼图]                       │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @chartRow2                                                   │
+      │  [告警热力图]            [最近活动时间线]                     │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: statCards, type: STAT_CARDS, label: 统计卡片, io: O }
+      - { id: chartRow1, type: CHART_ROW, label: 图表行1, io: O }
+      - { id: chartRow2, type: CHART_ROW, label: 图表行2, io: O }
+
+  # ──────────────────────────────────────────────
+  # 智能体管理
+  # ──────────────────────────────────────────────
+  - screenId: frmAgents
+    name: 智能体管理
+    screenType: CARD_LIST
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 智能体管理                                                   │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @agentCards                                                  │
+      │  [research-assistant] [topic-creator] [director-assistant]   │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: agentCards, type: CARD_LIST, label: 智能体卡片, io: O, dataSource: AGENT-LIST }
+
+  # ──────────────────────────────────────────────
+  # 数据提取（爬取引擎）
+  # ──────────────────────────────────────────────
+  - screenId: frmExtraction
+    name: 数据提取
+    screenType: MASTER_DETAIL_FORM
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 数据提取（爬取引擎）                                         │
+      │ 采集源:[pslSource] 频率:(cboFrequency) 状态:(cboStatus)     │
+      │ [btnRun 执行采集] [btnSchedule 定时] [btnStop 停止]          │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @grdTasks                                                   │
+      │  任务ID | 源 | 状态 | 采集数 | 耗时 | 开始时间 | 结束时间   │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: pslSource, type: POPUP_SELECT, label: 采集源, io: I, dataBinding: TrackCrawlSource.id }
+      - { id: cboFrequency, type: COMBO, label: 频率, io: I, enumValues: [ONCE, HOURLY, DAILY, WEEKLY] }
+      - { id: cboStatus, type: COMBO, label: 状态, io: I, dataBinding: TrackCrawlTask.status }
+      - { id: grdTasks, type: GRID, label: 采集任务, io: O }
+      - { id: btnRun, type: BUTTON, label: 执行采集 }
+      - { id: btnSchedule, type: BUTTON, label: 定时 }
+      - { id: btnStop, type: BUTTON, label: 停止 }
+
+  # ──────────────────────────────────────────────
+  # 数据资产（track 域）
+  # ──────────────────────────────────────────────
+  - screenId: frmDataAssets
+    name: 数据资产
+    screenType: QUERY_LIST
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 数据资产                                                     │
+      │ 类别:(cboCategory) [btnQuery 查询] [btnImport 导入] [btnExport]│
+      ├──────────────────────────────────────────────────────────────┤
+      │ @grdResult                                                   │
+      │  ID | 类别 | 标题 | 语种 | 来源 | 采集时间 | NLP状态        │
+      │ 分页: [lblPaging] [cboPageSize] [btnPrev] [btnNext]          │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: cboCategory, type: COMBO, label: 类别, io: I, enumValues: [文章, 采集源, 主题, 关键词] }
+      - { id: grdResult, type: GRID, label: 数据列表, io: O }
+      - { id: btnQuery, type: BUTTON, label: 查询 }
+      - { id: btnImport, type: BUTTON, label: 导入 }
+      - { id: btnExport, type: BUTTON, label: 导出 }
+
+  # ──────────────────────────────────────────────
+  # 本体建模画布（4步流程主视图）
+  # ──────────────────────────────────────────────
+  - screenId: frmOntologyCanvas
+    name: 本体建模画布
+    screenType: FLOW_CANVAS
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 本体建模画布                                                 │
+      │ [btnAddNode +] [btnAutoAlign 自动对齐] [btnRun 运行] [btnSave]│
+      ├──────────────────────────────────────────────────────────────┤
+      │ @flowCanvas                                                 │
+      │  [多源接入] →→→ [数据处理] →→→ [子图建模] →→→ [本体库(发布)]│
+      │  (蓝)         (绿)         (橙)         (绿)               │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @minimap                                                    │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: flowCanvas, type: FLOW_GRAPH, label: 流程画布, io: I_O, dataSource: flow-ontology-main }
+      - { id: minimap, type: MINIMAP, label: 缩略图, io: O }
+      - { id: btnAddNode, type: BUTTON, label: 添加节点 }
+      - { id: btnAutoAlign, type: TOGGLE, label: 自动对齐 }
+      - { id: btnRun, type: BUTTON, label: 运行 }
+      - { id: btnSave, type: BUTTON, label: 保存 }
+
+  # ──────────────────────────────────────────────
+  # 本体实体维护（主从表，含 i18n 翻译子表）
+  # ──────────────────────────────────────────────
+  - screenId: frmOntEntityMaintain
+    name: 本体实体维护
+    screenType: MASTER_DETAIL_FORM
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 本体实体维护                                                 │
+      │ 类别:(cboCategory) 名称:[txtEntityName] 语种:(cboLang)      │
+      │ 描述:[txtaDescription] 来源:[txtSource] Wiki:[txtWikiUrl]   │
+      │ 状态:(cboStatus)                                             │
+      ├──────────────────────────────────────────────────────────────┤
+      │ 多语种翻译（从表）                                           │
+      │ @grdI18n                                                     │
+      │  语种 | 翻译名称 | 翻译描述                                   │
+      │  [btnAddI18nRow]                                             │
+      ├──────────────────────────────────────────────────────────────┤
+      │ [btnSave 保存] [btnSubmit 提交] [btnDelete 删除] [btnCancel]  │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: cboCategory, type: COMBO, label: 类别, io: I, required: true, dataBinding: OntologyEntity.category }
+      - { id: txtEntityName, type: TEXTBOX, label: 实体名称, io: I, required: true, dataBinding: OntologyEntity.entityName }
+      - { id: cboLang, type: COMBO, label: 语种, io: I, dataBinding: OntologyEntity.lang }
+      - { id: txtaDescription, type: TEXTAREA, label: 描述, io: I, dataBinding: OntologyEntity.description }
+      - { id: txtSource, type: TEXTBOX, label: 来源, io: I, dataBinding: OntologyEntity.source }
+      - { id: txtWikiUrl, type: TEXTBOX, label: Wiki链接, io: I, dataBinding: OntologyEntity.wikiUrl }
+      - { id: cboStatus, type: COMBO, label: 状态, io: I, dataBinding: OntologyEntity.status }
+      - { id: grdI18n, type: GRID, label: 多语种翻译, io: I_O, dataBinding: OntologyEntity.i18nList }
+      - { id: btnAddI18nRow, type: BUTTON, label: 新增翻译行 }
+      - { id: btnSave, type: BUTTON, label: 保存 }
+      - { id: btnSubmit, type: BUTTON, label: 提交 }
+      - { id: btnDelete, type: BUTTON, label: 删除 }
+      - { id: btnCancel, type: BUTTON, label: 取消 }
+    actions:
+      - { actionId: actSave, name: 保存, actionType: DRAFT, behaviorRef: Ontology_Create, permissionRef: [PERM-ONT-CREATE] }
+      - { actionId: actSubmit, name: 提交, actionType: SUBMIT, behaviorRef: Ontology_Update, permissionRef: [PERM-ONT-UPDATE] }
+      - { actionId: actDelete, name: 删除, actionType: BUTTON, behaviorRef: Ontology_Delete, permissionRef: [PERM-ONT-DELETE] }
+
+  # ──────────────────────────────────────────────
+  # 本体搜索（查询列表）
+  # ──────────────────────────────────────────────
+  - screenId: frmOntSearch
+    name: 本体搜索
+    screenType: QUERY_LIST
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 本体搜索                                                     │
+      │ 类别:(cboCategory) 名称:[txtName] 语种:(cboLang)            │
+      │ [btnQuery 查询] [btnReset 重置]                              │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @grdResult                                                   │
+      │  实体ID | 类别 | 名称 | 描述 | 翻译名称 | 语种               │
+      │ 分页: [lblPaging] [cboPageSize] [btnPrev] [btnNext]          │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: cboCategory, type: COMBO, label: 类别, io: I, dataBinding: OntologyEntity.category }
+      - { id: txtName, type: TEXTBOX, label: 名称, io: I, dataBinding: OntologyEntity.entityName }
+      - { id: cboLang, type: COMBO, label: 语种, io: I, dataBinding: OntologyI18n.lang }
+      - { id: grdResult, type: GRID, label: 查询结果, io: O, dataSource: REP-ONT-SEARCH }
+      - { id: btnQuery, type: BUTTON, label: 查询 }
+      - { id: btnReset, type: BUTTON, label: 重置 }
+    actions:
+      - { actionId: actQuery, name: 查询, actionType: BUTTON, behaviorRef: Ontology_query, permissionRef: [PERM-ONT-READ] }
+
+  # ──────────────────────────────────────────────
+  # 文章查询（查询列表）
+  # ──────────────────────────────────────────────
+  - screenId: frmTrackArticleQuery
+    name: 文章查询
+    screenType: QUERY_LIST
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 文章查询                                                     │
+      │ 主题:[pslTopic] 语种:(cboLang) 情感:(cboSentiment)          │
+      │ 发布时间从:{dtpFrom} 到:{dtpTo} NLP状态:(cboNlpStatus)      │
+      │ [btnQuery 查询] [btnReset 重置] [btnExport 导出]             │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @grdResult                                                   │
+      │  文章ID | 标题 | 语种 | 发布时间 | 来源 | 情感 | NLP状态     │
+      │ 分页: [lblPaging] [cboPageSize] [btnPrev] [btnNext]          │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: pslTopic, type: POPUP_SELECT, label: 主题, io: I, dataBinding: TrackArticle.topicId }
+      - { id: cboLang, type: COMBO, label: 语种, io: I, dataBinding: TrackArticle.lang }
+      - { id: cboSentiment, type: COMBO, label: 情感, io: I, dataBinding: TrackArticle.sentiment }
+      - { id: dtpFrom, type: DATETIMEPICKER, label: 发布时间从, io: I }
+      - { id: dtpTo, type: DATETIMEPICKER, label: 到, io: I }
+      - { id: cboNlpStatus, type: COMBO, label: NLP状态, io: I, dataBinding: TrackArticle.nlpStatus }
+      - { id: grdResult, type: GRID, label: 查询结果, io: O, dataSource: REP-ARTICLE-LIST }
+      - { id: btnQuery, type: BUTTON, label: 查询 }
+      - { id: btnReset, type: BUTTON, label: 重置 }
+      - { id: btnExport, type: BUTTON, label: 导出 }
+    actions:
+      - { actionId: actQuery, name: 查询, actionType: BUTTON, behaviorRef: Article_Query, permissionRef: [PERM-TRACK-QUERY] }
+
+  # ──────────────────────────────────────────────
+  # 追踪主题维护（表单）
+  # ──────────────────────────────────────────────
+  - screenId: frmAnzTopicMaintain
+    name: 追踪主题维护
+    screenType: MASTER_DETAIL_FORM
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 追踪主题维护                                                 │
+      │ 主题名称:[txtTopicName] 类型:(cboTopicType) 区域:[txtRegion]│
+      │ 描述:[txtaDescription] 关键词组:[pslKeywordGroup]           │
+      │ 采集源:[txtSourceIds] 告警规则:[txtAlertRuleIds]            │
+      │ 启用告警:[chkAlertEnabled] 状态:(cboStatus)                 │
+      ├──────────────────────────────────────────────────────────────┤
+      │ 主题要素（从表）                                             │
+      │ @grdElement                                                 │
+      │  要素类型 | 要素值 | 要素名称 | 权重                         │
+      │  [btnAddElementRow]                                          │
+      ├──────────────────────────────────────────────────────────────┤
+      │ [btnSave 保存] [btnSubmit 提交] [btnCancel 取消]             │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: txtTopicName, type: TEXTBOX, label: 主题名称, io: I, required: true, dataBinding: AnalyzeTrackTopic.topicName }
+      - { id: cboTopicType, type: COMBO, label: 主题类型, io: I, dataBinding: AnalyzeTrackTopic.topicType }
+      - { id: txtRegion, type: TEXTBOX, label: 关注区域, io: I, dataBinding: AnalyzeTrackTopic.hotspotRegion }
+      - { id: txtaDescription, type: TEXTAREA, label: 描述, io: I, dataBinding: AnalyzeTrackTopic.description }
+      - { id: pslKeywordGroup, type: POPUP_SELECT, label: 关键词组, io: I, dataBinding: AnalyzeTrackTopic.keywordGroupId }
+      - { id: txtSourceIds, type: TEXTBOX, label: 采集源, io: I, dataBinding: AnalyzeTrackTopic.crawlSourceIds }
+      - { id: txtAlertRuleIds, type: TEXTBOX, label: 告警规则, io: I, dataBinding: AnalyzeTrackTopic.alertRuleIds }
+      - { id: chkAlertEnabled, type: CHECKBOX, label: 启用告警, io: I, dataBinding: AnalyzeTrackTopic.alertEnabled }
+      - { id: cboStatus, type: COMBO, label: 状态, io: I, dataBinding: AnalyzeTrackTopic.status }
+      - { id: grdElement, type: GRID, label: 主题要素, io: I_O, dataBinding: AnalyzeTrackTopic.elementList }
+      - { id: btnAddElementRow, type: BUTTON, label: 新增要素行 }
+      - { id: btnSave, type: BUTTON, label: 保存 }
+      - { id: btnSubmit, type: BUTTON, label: 提交 }
+      - { id: btnCancel, type: BUTTON, label: 取消 }
+    actions:
+      - { actionId: actSave, name: 保存, actionType: DRAFT, behaviorRef: Topic_Create, permissionRef: [PERM-ANALYZE-CREATE] }
+      - { actionId: actSubmit, name: 提交, actionType: SUBMIT, behaviorRef: Topic_Create, permissionRef: [PERM-ANALYZE-CREATE] }
+
+  # ──────────────────────────────────────────────
+  # 告警中心（查询列表 + 处理操作）
+  # ──────────────────────────────────────────────
+  - screenId: frmDspAlertCenter
+    name: 告警中心
+    screenType: QUERY_LIST
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 告警中心                                                     │
+      │ 级别:(cboLevel) 状态:(cboStatus) 时间从:{dtpFrom} 到:{dtpTo}│
+      │ [btnQuery 查询] [btnReset 重置]                              │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @grdResult                                                   │
+      │  告警ID | 级别 | 标题 | 触发关键词 | 状态 | 处理人 | 时间    │
+      │ [btnResolve 处理] [btnMarkRead 标记已读]                     │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: cboLevel, type: COMBO, label: 级别, io: I, dataBinding: DisplayAlertRecord.alertLevel }
+      - { id: cboStatus, type: COMBO, label: 状态, io: I, dataBinding: DisplayAlertRecord.status }
+      - { id: dtpFrom, type: DATETIMEPICKER, label: 时间从, io: I }
+      - { id: dtpTo, type: DATETIMEPICKER, label: 到, io: I }
+      - { id: grdResult, type: GRID, label: 告警列表, io: O }
+      - { id: btnQuery, type: BUTTON, label: 查询 }
+      - { id: btnReset, type: BUTTON, label: 重置 }
+      - { id: btnResolve, type: BUTTON, label: 处理 }
+      - { id: btnMarkRead, type: BUTTON, label: 标记已读 }
+    actions:
+      - { actionId: actQuery, name: 查询, actionType: BUTTON, behaviorRef: Display_QueryReport, permissionRef: [PERM-DISPLAY-QUERY] }
+
+  # ──────────────────────────────────────────────
+  # 统一知识图谱（主任专属，图谱可视化）
+  # ──────────────────────────────────────────────
+  - screenId: frmGlbUnifiedKg
+    name: 统一知识图谱
+    screenType: GRAPH_VIEW
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 统一知识图谱（主任专属）                                     │
+      │ 节点类型:(cboNodeType) 租户:[pslTenant] 来源层:(cboLayer)  │
+      │ [btnQuery 查询] [btnAggregate 执行汇聚]                      │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @graphCanvas                                                 │
+      │  图谱可视化区域（节点 + 边 + 权重）                          │
+      │  [btnZoomIn 放大] [btnZoomOut 缩小] [btnLayout 布局]        │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: cboNodeType, type: COMBO, label: 节点类型, io: I, dataBinding: TrackKgNode.nodeType }
+      - { id: pslTenant, type: POPUP_SELECT, label: 租户, io: I, dataBinding: TrackKgNode.tenantId }
+      - { id: cboLayer, type: COMBO, label: 来源层, io: I, enumValues: [PERSONAL, GLOBAL] }
+      - { id: graphCanvas, type: GRAPH, label: 图谱画布, io: O, dataSource: REP-UNIFIED-KG }
+      - { id: btnQuery, type: BUTTON, label: 查询 }
+      - { id: btnAggregate, type: BUTTON, label: 执行汇聚 }
+      - { id: btnZoomIn, type: BUTTON, label: 放大 }
+      - { id: btnZoomOut, type: BUTTON, label: 缩小 }
+      - { id: btnLayout, type: BUTTON, label: 布局 }
+    actions:
+      - { actionId: actQuery, name: 查询, actionType: BUTTON, behaviorRef: Global_QueryUnified, permissionRef: [PERM-GLOBAL-QUERY] }
+      - { actionId: actAggregate, name: 执行汇聚, actionType: BUTTON, behaviorRef: Global_Aggregate, permissionRef: [PERM-GLOBAL-AGGREGATE] }
+
+  # ──────────────────────────────────────────────
+  # 报告管理（查询列表 + 生成操作）
+  # ──────────────────────────────────────────────
+  - screenId: frmDspReportList
+    name: 报告管理
+    screenType: QUERY_LIST
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 报告管理                                                     │
+      │ 类型:(cboType) 主题:[pslTopic] 状态:(cboStatus) 范围:(cboScope)│
+      │ [btnQuery 查询] [btnGenerate 生成报告] [btnPublish 发布]     │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @grdResult                                                   │
+      │  报告ID | 名称 | 类型 | 状态 | 范围 | 浏览数 | 创建时间     │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: cboType, type: COMBO, label: 类型, io: I, dataBinding: DisplayRptReport.reportType }
+      - { id: pslTopic, type: POPUP_SELECT, label: 主题, io: I, dataBinding: DisplayRptReport.topicId }
+      - { id: cboStatus, type: COMBO, label: 状态, io: I, dataBinding: DisplayRptReport.status }
+      - { id: cboScope, type: COMBO, label: 范围, io: I, dataBinding: DisplayRptReport.scope }
+      - { id: grdResult, type: GRID, label: 报告列表, io: O, dataSource: REP-REPORT-LIST }
+      - { id: btnQuery, type: BUTTON, label: 查询 }
+      - { id: btnGenerate, type: BUTTON, label: 生成报告 }
+      - { id: btnPublish, type: BUTTON, label: 发布 }
+    actions:
+      - { actionId: actQuery, name: 查询, actionType: BUTTON, behaviorRef: Display_QueryReport, permissionRef: [PERM-DISPLAY-QUERY] }
+      - { actionId: actGenerate, name: 生成报告, actionType: BUTTON, behaviorRef: Report_Generate, permissionRef: [PERM-DISPLAY-REPORT] }
+      - { actionId: actPublish, name: 发布, actionType: BUTTON, behaviorRef: Report_Publish, permissionRef: [PERM-DISPLAY-REPORT] }
+
+  # ──────────────────────────────────────────────
+  # 发现实体（晋升操作）
+  # ──────────────────────────────────────────────
+  - screenId: frmCmnDiscoveredEntity
+    name: 发现实体
+    screenType: QUERY_LIST
+    layout: |
+      ┌──────────────────────────────────────────────────────────────┐
+      │ 发现实体                                                     │
+      │ 名称:[txtName] 类型:(cboType) 状态:(cboStatus)              │
+      │ [btnQuery 查询] [btnPromote 晋升到本体]                      │
+      ├──────────────────────────────────────────────────────────────┤
+      │ @grdResult                                                   │
+      │  ID | 名称 | 类型 | 提及次数 | 状态 | 首次发现 | 关联本体   │
+      └──────────────────────────────────────────────────────────────┘
+    elements:
+      - { id: txtName, type: TEXTBOX, label: 名称, io: I, dataBinding: CommonDiscoveredEntity.entityName }
+      - { id: cboType, type: COMBO, label: 类型, io: I, dataBinding: CommonDiscoveredEntity.entityType }
+      - { id: cboStatus, type: COMBO, label: 状态, io: I, dataBinding: CommonDiscoveredEntity.status }
+      - { id: grdResult, type: GRID, label: 发现实体列表, io: O }
+      - { id: btnQuery, type: BUTTON, label: 查询 }
+      - { id: btnPromote, type: BUTTON, label: 晋升到本体 }
+    actions:
+      - { actionId: actQuery, name: 查询, actionType: BUTTON, behaviorRef: Track_QueryList, permissionRef: [PERM-TRACK-QUERY] }
+      - { actionId: actPromote, name: 晋升到本体, actionType: BUTTON, behaviorRef: Ontology_Promote, permissionRef: [PERM-ONT-CREATE] }

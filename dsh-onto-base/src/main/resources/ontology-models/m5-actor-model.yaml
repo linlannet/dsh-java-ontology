@@ -1,0 +1,67 @@
+# M5 主体模型元文件（产品层 base）- m5-actor-model.yaml
+# 通用 RBAC：三角色 + 本体/全局权限
+model_type: ACTOR
+version: "3.0"
+domain: "通用本体知识库平台"
+
+actors:
+  - actorId: ACTOR-DIRECTOR
+    name: 主任
+    actorType: HUMAN
+    roles: [ROLE-SUPER-ADMIN]
+
+  - actorId: ACTOR-RESEARCHER
+    name: 研究员
+    actorType: HUMAN
+    roles: [ROLE-RESEARCHER]
+
+  - actorId: ACTOR-GUEST
+    name: 访客
+    actorType: HUMAN
+    roles: [ROLE-GUEST]
+
+  - actorId: ACTOR-SYSTEM
+    name: 系统自动执行主体
+    actorType: SYSTEM
+    roles: [ROLE-SYSTEM]
+
+roles:
+  - roleId: ROLE-SUPER-ADMIN
+    name: 主任
+    description: 全局管理员，可操作所有域 + 统一层 + 全局汇聚
+    
+permissions:
+  # ══════════════════════════════════════════════════════════
+  # 本体域权限 + 全局汇聚权限（产品层通用）
+  # ══════════════════════════════════════════════════════════
+
+  - permissionId: PERM-ONT-CREATE
+    targetType: BEHAVIOR
+    targetRef: Ontology_Create
+    dataScope: ALL
+  - permissionId: PERM-ONT-UPDATE
+    targetType: BEHAVIOR
+    targetRef: Ontology_Update
+    dataScope: ALL
+  - permissionId: PERM-ONT-DELETE
+    targetType: BEHAVIOR
+    targetRef: Ontology_Delete
+    dataScope: ALL
+  - permissionId: PERM-ONT-READ
+    targetType: BEHAVIOR
+    targetRef: Ontology_Query
+    dataScope: ALL
+
+  # ══════════════════════════════════════════════════════════
+  # 监测域权限
+  # ══════════════════════════════════════════════════════════
+  - permissionId: PERM-GLOBAL-AGGREGATE
+    targetType: BEHAVIOR
+    targetRef: Global_Aggregate
+    dataScope: ALL
+    abacCondition: "actor.roleLevel == 0"
+  - permissionId: PERM-GLOBAL-QUERY
+    targetType: BEHAVIOR
+    targetRef: Global_QueryUnified
+    dataScope: ALL
+    abacCondition: "actor.roleLevel == 0"

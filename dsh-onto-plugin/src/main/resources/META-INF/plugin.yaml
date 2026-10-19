@@ -1,0 +1,6 @@
+id: dsh-onto
+name: DSH Onto Plugin
+version: 2.0.0
+author: linlan
+description: 3 atomic tools for workspace overview, knowledge aggregation, director overview.
+entrypoint: net.linlan.dsh.ontology.plugin.DshOntoPlugin

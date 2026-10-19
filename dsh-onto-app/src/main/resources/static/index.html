@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSH Ontology Admin</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <h1>DSH Ontology Admin</h1>
+        <span class="badge">本体库管理后台</span>
+    </header>
+    <main>
+        <section id="ontology-list">
+            <h2>本体库列表</h2>
+            <button id="btn-refresh" onclick="loadOntologies()">刷新</button>
+            <button id="btn-new" onclick="showNewForm()">新建本体</button>
+            <div id="new-form" style="display:none">
+                <input id="new-name" placeholder="名称">
+                <input id="new-desc" placeholder="描述">
+                <input id="new-source" placeholder="来源 (可选)">
+                <button onclick="createOntology()">保存</button>
+            </div>
+            <table id="ontology-table">
+                <thead><tr><th>ID</th><th>名称</th><th>描述</th><th>来源</th><th>操作</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </section>
+        <section id="ai-chat">
+            <h2>AI 对话</h2>
+            <input id="agent-id" placeholder="Agent ID">
+            <input id="ontology-id" placeholder="本体库 ID (可选)">
+            <textarea id="ai-message" placeholder="输入问题..."></textarea>
+            <button onclick="aiChat()">发送</button>
+            <button onclick="aiStream()">流式发送</button>
+            <div id="ai-output"></div>
+        </section>
+    </main>
+    <script src="/app.js"></script>
+</body>
+</html>

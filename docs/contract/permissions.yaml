@@ -1,0 +1,130 @@
+# 权限矩阵 — 活文档
+# P2-19 自动生成，由 PermissionMatrixTest 验证
+# 更新日期：2026-10-18
+#
+# 角色层级：
+#   0 = director（主任）
+#   1 = researcher（研究员）
+#   2 = guest（访客）
+#
+# required_role 含义：
+#   public  — @PublicApi，无需认证
+#   0       — 仅主任
+#   1       — 主任 + 研究员
+#   2       — 主任 + 研究员 + 访客
+#   fail-closed（无注解）— 默认拒绝，测试会报违规
+
+endpoints:
+
+  # === 认证 ===
+  - { method: POST,   path: /api/auth/login,            required_role: public, controller: AuthController }
+  - { method: POST,   path: /api/auth/register,         required_role: public, controller: AuthController }
+  - { method: GET,    path: /api/auth/userinfo,         required_role: 2,      controller: AuthController }
+  - { method: PUT,    path: /api/auth/password,         required_role: 2,      controller: AuthController }
+
+  # === 用户管理（仅主任） ===
+  - { method: GET,    path: /api/auth/user,             required_role: 0, controller: SysUserController }
+  - { method: GET,    path: /api/auth/user/page,        required_role: 0, controller: SysUserController }
+  - { method: GET,    path: /api/auth/user/count,       required_role: 1, controller: SysUserController }
+  - { method: GET,    path: /api/auth/user/{id},        required_role: 0, controller: SysUserController }
+  - { method: PUT,    path: /api/auth/user/{id},        required_role: 0, controller: SysUserController }
+  - { method: DELETE, path: /api/auth/user/{id},        required_role: 0, controller: SysUserController }
+
+  # === 角色管理（仅主任） ===
+  - { method: GET,    path: /api/auth/role,                     required_role: 0, controller: SysRoleController }
+  - { method: GET,    path: /api/auth/role/{id},                required_role: 0, controller: SysRoleController }
+  - { method: POST,   path: /api/auth/role,                     required_role: 0, controller: SysRoleController }
+  - { method: PUT,    path: /api/auth/role/{id},                required_role: 0, controller: SysRoleController }
+  - { method: DELETE, path: /api/auth/role/{id},                required_role: 0, controller: SysRoleController }
+  - { method: GET,    path: /api/auth/role/user/{userId},       required_role: 0, controller: SysRoleController }
+  - { method: POST,   path: /api/auth/role/user/{userId}/assign/{roleId},  required_role: 0, controller: SysRoleController }
+  - { method: DELETE, path: /api/auth/role/user/{userId}/revoke/{roleId},  required_role: 0, controller: SysRoleController }
+
+  # === 审计日志（仅主任） ===
+  - { method: GET,    path: /api/auth/audit-log/page,           required_role: 0, controller: SysAuditLogController }
+  - { method: GET,    path: /api/auth/audit-log/user/{userId},  required_role: 0, controller: SysAuditLogController }
+  - { method: GET,    path: /api/auth/audit-log/action/{action}, required_role: 0, controller: SysAuditLogController }
+  - { method: GET,    path: /api/auth/audit-log/count,          required_role: 0, controller: SysAuditLogController }
+
+  # === 通知订阅 ===
+  - { method: POST,   path: /api/notify/subscribe,          required_role: 1, controller: NotifyController }
+  - { method: DELETE, path: /api/notify/subscribe/{id},     required_role: 1, controller: NotifyController }
+  - { method: GET,    path: /api/notify/my-subscriptions,   required_role: 2, controller: NotifyController }
+  - { method: GET,    path: /api/notify/my-messages,        required_role: 2, controller: NotifyController }
+  - { method: POST,   path: /api/notify/send,               required_role: 0, controller: NotifyController }
+
+  # === 统一文件表 ===
+  - { method: GET,    path: /api/file/{id},                 required_role: 2, controller: CommonFileController }
+  - { method: GET,    path: /api/file/page,                 required_role: 1, controller: CommonFileController }
+  - { method: POST,   path: /api/file/{id}/ref/increment,   required_role: 1, controller: CommonFileController }
+  - { method: POST,   path: /api/file/{id}/ref/decrement,   required_role: 1, controller: CommonFileController }
+  - { method: DELETE, path: /api/file/{id},                 required_role: 1, controller: CommonFileController }
+
+  # === 本体管理 ===
+  - { method: GET,    path: /api/ontologies,                required_role: 1, controller: OntologyController }
+  - { method: POST,   path: /api/ontologies,                required_role: 1, controller: OntologyController }
+  - { method: DELETE, path: /api/ontologies/{id},           required_role: 1, controller: OntologyController }
+  - { method: POST,   path: /api/ontologies/query,          required_role: 1, controller: OntologyController }
+  - { method: POST,   path: /api/ontologies/search,         required_role: 1, controller: OntologyController }
+  - { method: POST,   path: /api/ontologies/ai,             required_role: 1, controller: OntologyController }
+  - { method: POST,   path: /api/ontologies/ai/stream,      required_role: 1, controller: OntologyController }
+
+  # === 工作空间 ===
+  - { method: GET,    path: /api/workspace/categories,       required_role: 1, controller: WorkspaceController }
+  - { method: GET,    path: /api/workspace/{category},       required_role: 1, controller: WorkspaceController }
+  - { method: GET,    path: /api/workspace/{category}/typed, required_role: 1, controller: WorkspaceController }
+  - { method: GET,    path: /api/workspace/{category}/page,  required_role: 1, controller: WorkspaceController }
+  - { method: GET,    path: /api/workspace/{category}/{id},  required_role: 1, controller: WorkspaceController }
+  - { method: POST,   path: /api/workspace/{category},       required_role: 1, controller: WorkspaceController }
+  - { method: PUT,    path: /api/workspace/{category}/{id},  required_role: 1, controller: WorkspaceController }
+  - { method: DELETE, path: /api/workspace/{category}/{id},  required_role: 1, controller: WorkspaceController }
+  - { method: GET,    path: /api/workspace/{category}/count, required_role: 1, controller: WorkspaceController }
+  - { method: GET,    path: /api/workspace/search,           required_role: 1, controller: WorkspaceController }
+  - { method: POST,   path: /api/workspace/{category}/query, required_role: 1, controller: WorkspaceController }
+
+  # === 工作流编排 ===
+  - { method: POST,   path: /api/workline/topic/{topicId}/activate,   required_role: 1, controller: WorklineController }
+  - { method: GET,    path: /api/workline/{worklineId}/status,         required_role: 1, controller: WorklineController }
+  - { method: GET,    path: /api/workline/{worklineId}/progress,       required_role: 1, controller: WorklineController }
+  - { method: POST,   path: /api/workline/{worklineId}/phase/{phase},  required_role: 1, controller: WorklineController }
+  - { method: POST,   path: /api/workline/{worklineId}/executeUntil/{phase}, required_role: 1, controller: WorklineController }
+  - { method: POST,   path: /api/workline/{worklineId}/executeAll,     required_role: 1, controller: WorklineController }
+  - { method: GET,    path: /api/workline/stages,                      required_role: 1, controller: WorklineController }
+
+  # === 汇聚/全局知识（仅主任） ===
+  - { method: POST,   path: /api/aggregation/trigger,              required_role: 0, controller: AggregationController }
+  - { method: POST,   path: /api/aggregation/incremental/{tenantId}, required_role: 0, controller: AggregationController }
+  - { method: GET,    path: /api/aggregation/logs,                 required_role: 0, controller: AggregationController }
+  - { method: GET,    path: /api/aggregation/unified-monitor,      required_role: 0, controller: AggregationController }
+  - { method: GET,    path: /api/aggregation/unified-kg,           required_role: 0, controller: AggregationController }
+  - { method: GET,    path: /api/global/entities,                  required_role: 0, controller: GlobalKnowledgeController }
+  - { method: GET,    path: /api/global/relations,                 required_role: 0, controller: GlobalKnowledgeController }
+  - { method: GET,    path: /api/global/kg/nodes,                  required_role: 0, controller: GlobalKnowledgeController }
+  - { method: GET,    path: /api/global/kg/edges,                  required_role: 0, controller: GlobalKnowledgeController }
+  - { method: GET,    path: /api/global/director/overview,         required_role: 0, controller: GlobalKnowledgeController }
+
+  # === Track 域（研究员+） ===
+  - { method: GET,    path: /api/track/categories,       required_role: 1, controller: TrackController }
+  - { method: GET,    path: /api/track/{category},       required_role: 1, controller: TrackController }
+  - { method: GET,    path: /api/track/{category}/typed, required_role: 1, controller: TrackController }
+  - { method: GET,    path: /api/track/{category}/page,  required_role: 1, controller: TrackController }
+  - { method: GET,    path: /api/track/{category}/{id},  required_role: 1, controller: TrackController }
+  - { method: POST,   path: /api/track/{category},       required_role: 1, controller: TrackController }
+  - { method: PUT,    path: /api/track/{category}/{id},  required_role: 1, controller: TrackController }
+  - { method: DELETE, path: /api/track/{category}/{id},  required_role: 1, controller: TrackController }
+  - { method: GET,    path: /api/track/{category}/count, required_role: 1, controller: TrackController }
+  - { method: GET,    path: /api/track/search,           required_role: 1, controller: TrackController }
+  - { method: POST,   path: /api/track/{category}/query, required_role: 1, controller: TrackController }
+
+  # === 爬取引擎（研究员+） ===
+  - { method: POST,   path: /api/crawl/source/{sourceId}/execute, required_role: 1, controller: CrawlController }
+  - { method: POST,   path: /api/crawl/task/{taskId}/execute,     required_role: 1, controller: CrawlController }
+  - { method: GET,    path: /api/crawl/task/{taskId}/status,      required_role: 1, controller: CrawlController }
+  - { method: GET,    path: /api/crawl/sources,                   required_role: 1, controller: CrawlController }
+  - { method: GET,    path: /api/crawl/tasks/pending,             required_role: 1, controller: CrawlController }
+
+  # === Analyze 域（研究员+） ===
+  # === Display 域（研究员+） ===
+  # === Ontology CRUD（研究员+） ===
+  # === Report 域（研究员+） ===
+  # （完整列表由 PermissionMatrixTest 在运行时动态验证，此处列主要端点）
