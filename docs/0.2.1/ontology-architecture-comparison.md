@@ -5,9 +5,9 @@
 > **背景**：OntoFlow 文章（https://mp.weixin.qq.com/s/qy1OOT0_wbq15Rw_iuEWrQ）批评的"Agent→Tool→SQL→MySQL"模式正是我们当前的技术路线。本文深入分析该批评的依据，对比主流本体库建设路线，给出演进建议。
 >
 > **关联**：
-> - `../../dsh-ontoext-siis/docs/frontend-design.md` — 前端界面设计（OntoFlow 布局对齐）
+> - `../../dsh-ontolab-siis/docs/frontend-design.md` — 前端界面设计（OntoFlow 布局对齐）
 > - `siis-platform-design.md` — 平台级设计
-> - `../../dsh-ontoext-siis/docs/DB-DESIGN.md` — 52 张表 + 2 视图
+> - `../../dsh-ontolab-siis/docs/DB-DESIGN.md` — 52 张表 + 2 视图
 
 ---
 

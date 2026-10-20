@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * 聚合应用入口：打包 base/flow/report/visulization 四模块
+ * 聚合应用入口：打包 base/flow/qa/viz/metric 五模块
  * <p>主类位于 {@code net.linlan.dsh} 根包，默认组件扫描即覆盖全部模块与
  * 应用层 {@code net.linlan.dsh.onto.*}（config/model/service/controller 分层，
  * 参考 dsh-java-mysql-app 结构）。</p>

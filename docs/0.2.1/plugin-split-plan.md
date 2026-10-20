@@ -75,7 +75,7 @@ dsh-java-ontology/                    (根 pom, version 0.2.1)
 ## 2. 拆分目标
 
 1. **插件层**：将 1 个单体插件 JAR 拆为 3 个独立插件 JAR，各自注册到 Harness
-2. **复用空占位模块**：激活 `dsh-onto-base`、`dsh-onto-flow`、`dsh-onto-visulization`
+2. **复用空占位模块**：激活 `dsh-onto-base`、`dsh-onto-flow`、`dsh-onto-viz`
 3. **App 保持单体**：共享 DB/Auth/Flyway，避免微服务拆分的运维成本
 4. **按角色隔离**：普通用户工具 vs 研究员工具 vs 主任工具分属不同插件
 
@@ -184,7 +184,7 @@ entrypoint: net.linlan.dsh.ontology.flow.DshOntoFlowPlugin
 | 项目 | 内容 |
 |------|------|
 | packaging | jar |
-| pluginId | `dsh-onto-visulization` |
+| pluginId | `dsh-onto-viz` |
 | 注册 Tool | 6 个 |
 | Tool 列表 | nlp_extract, report_generate, ontology_promote, workspace_overview, knowledge_aggregate, director_overview |
 | 对应 App 域 | analyze + display(rpt) + global + workspace |

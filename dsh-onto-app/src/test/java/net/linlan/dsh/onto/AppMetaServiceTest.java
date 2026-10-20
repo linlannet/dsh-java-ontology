@@ -33,13 +33,13 @@ class AppMetaServiceTest extends BaseTest {
         assertEquals("0.2.1", info.version());
         assertNotNull(info.description());
         assertTrue(info.modules().containsAll(
-                List.of("app", "base", "flow", "report", "visulization")));
+                List.of("app", "base", "flow", "qa", "viz", "metric")));
     }
 
     @Test
     void testEndpointsGroupedByModule() {
         Map<String, List<EndpointDescriptor>> grouped = metaService.endpoints();
-        for (String module : List.of("app", "base", "flow", "report", "visulization")) {
+        for (String module : List.of("app", "base", "flow", "qa", "viz", "metric")) {
             assertTrue(grouped.containsKey(module), "缺少模块分组: " + module);
         }
         assertTrue(grouped.get("app").stream()
@@ -48,8 +48,8 @@ class AppMetaServiceTest extends BaseTest {
                 .anyMatch(e -> e.path().startsWith("/api/ontologies")), "flow 分组应含 /api/ontologies");
         assertTrue(grouped.get("flow").stream()
                 .anyMatch(e -> e.path().startsWith("/api/auth/")), "flow 分组应含 /api/auth/");
-        assertTrue(grouped.get("report").stream()
-                .anyMatch(e -> e.path().startsWith("/api/report")), "report 分组应含 /api/report");
+        assertTrue(grouped.get("qa").stream()
+                .anyMatch(e -> e.path().startsWith("/api/report")), "qa 分组应含 /api/report");
     }
 
     @Test

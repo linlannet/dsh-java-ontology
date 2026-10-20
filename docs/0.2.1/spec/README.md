@@ -6,7 +6,7 @@
 
 | 文件 | 说明 |
 |------|------|
-| `../../../dsh-ontoext-siis/docs/design-v2.0.md` | v2.0 架构设计（Agent/Skill/Tool/YAML 驱动）|
+| `../../../dsh-ontolab-siis/docs/design-v2.0.md` | v2.0 架构设计（Agent/Skill/Tool/YAML 驱动）|
 | `hotspot-analysis-spec.md` | EARS 需求规格（101 条需求 / 14 组）|
 | `hotspot-analysis-design.md` | 七阶段流水线详细设计 |
 | `tasks.md` | 编码任务清单（96 任务 / 12 Phase）|

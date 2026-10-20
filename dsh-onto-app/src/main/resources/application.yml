@@ -34,7 +34,7 @@ dsh:
   app:
     name: dsh-onto-app
     version: 0.2.1
-    description: 聚合应用：打包 dsh-onto-base/flow/report/visulization 四模块
+    description: 聚合应用：打包 dsh-onto-base/flow/qa/viz/metric 五模块
   ontology:
     data-directory: ${user.home}/.dsh-java-ontology
     query-timeout-seconds: 15

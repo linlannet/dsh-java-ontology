@@ -29,12 +29,14 @@ dsh-java-ontology/
 │   ├── src/main/java/net/linlan/dsh/plat/          平台编排（OntologyController/HarnessAi/Workline）
 │   ├── src/main/java/net/linlan/dsh/global/        全局知识聚合（Aggregation/GlobalKnowledge/KnowledgeAggregator）
 │   └── src/main/java/net/linlan/dsh/workspace/     统一工作台（WorkspaceController）
-├── dsh-onto-visulization/                  可视化包：前端静态资源（HTML/CSS/JS）
-├── dsh-onto-app/                           聚合应用：base + flow + visulization（端口 8100）
+├── dsh-onto-qa/                            问数包：数据分析 + 报告 + 问数（模板/章节/图表/会话/任务）
+├── dsh-onto-viz/                           可视化包：前端静态资源（HTML/CSS/JS）
+├── dsh-onto-metric/                        指标包：业务对象/流程/决策点 + 原子/派生/复合指标 + 依赖树
+├── dsh-onto-app/                           聚合应用：base + flow + qa + viz + metric（端口 8100）
 ├── dsh-onto-plugin/                        插件输出：3 个平台工具（workspace/knowledge/director）
-└── dsh-ontoext-siis/                       SIIS 子项目
-    ├── dsh-ontoext-siis-app/               SIIS 应用：四域业务 + 完整 schema（端口 8101）
-    └── dsh-ontoext-siis-plugin/            SIIS 插件输出：12 个业务工具
+└── dsh-ontolab-siis/                       SIIS 子项目
+    ├── dsh-ontolab-siis-app/               SIIS 应用：四域业务 + 完整 schema（端口 8101）
+    └── dsh-ontolab-siis-plugin/            SIIS 插件输出：12 个业务工具
 ```
 
 ```text
@@ -42,7 +44,7 @@ dsh-java-ontology/
                │
                └─ AI 对话 ──► dsh-java (8090)
                                  ├─► dsh-onto-plugin (3 工具) ──► 平台 API
-                                 └─► dsh-ontoext-siis-plugin (12 工具) ──► SIIS API
+                                 └─► dsh-ontolab-siis-plugin (12 工具) ──► SIIS API
 ```
 
 ### 表命名规范
@@ -93,13 +95,13 @@ mvn spring-boot:run -pl dsh-onto-app
 ### 3. 启动 SIIS 应用（四域业务）
 
 ```bash
-java -jar dsh-ontoext-siis/dsh-ontoext-siis-app/target/dsh-ontoext-siis-app-0.2.1-exec.jar
+java -jar linlannet/dsh-ontolab-siis-app/target/dsh-ontolab-siis-app-0.2.1-exec.jar
 ```
 
 或开发模式：
 
 ```bash
-mvn spring-boot:run -pl dsh-ontoext-siis/dsh-ontoext-siis-app
+mvn spring-boot:run -pl linlannet/dsh-ontolab-siis-app
 ```
 
 打开 <http://127.0.0.1:8101>。
@@ -135,31 +137,31 @@ curl -X POST http://localhost:8090/api/harness/plugins/activate \
 ### SIIS 插件（12 工具）
 
 ```bash
-JAR="$PWD/dsh-ontoext-siis/dsh-ontoext-siis-plugin/target/dsh-ontoext-siis-plugin-0.2.1.jar"
+JAR="$PWD/linlannet/dsh-ontolab-siis-plugin/target/dsh-ontolab-siis-plugin-0.2.1.jar"
 
 curl -X POST http://localhost:8090/api/harness/plugins/install \
   -H 'Content-Type: application/json' \
-  -d "{\"pluginId\":\"dsh-ontoext-siis\",\"displayName\":\"DSH Ontoext SIIS Plugin\",\"pluginVersion\":\"0.2.1\",\"runtimeType\":\"JAVA_NATIVE\",\"sourcePath\":\"$JAR\",\"entrypoint\":\"dsh-ontoext-siis-plugin-0.2.1.jar\"}"
+  -d "{\"pluginId\":\"dsh-ontolab-siis\",\"displayName\":\"DSH Ontolab SIIS Plugin\",\"pluginVersion\":\"0.2.1\",\"runtimeType\":\"JAVA_NATIVE\",\"sourcePath\":\"$JAR\",\"entrypoint\":\"dsh-ontolab-siis-plugin-0.2.1.jar\"}"
 
 curl -X POST http://localhost:8090/api/harness/plugins/activate \
   -H 'Content-Type: application/json' \
-  -d '{"pluginId":"dsh-ontoext-siis"}'
+  -d '{"pluginId":"dsh-ontolab-siis"}'
 ```
 
 | 工具 | 说明 |
 | --- | --- |
-| `plugin__dsh-ontoext-siis__ontology_list` | 列出本体版本 |
-| `plugin__dsh-ontoext-siis__ontology_query` | 查询概念定义与层级 |
-| `plugin__dsh-ontoext-siis__ontology_search` | 模糊搜索概念 |
-| `plugin__dsh-ontoext-siis__kg_query` | 知识图谱查询 |
-| `plugin__dsh-ontoext-siis__kg_search` | 知识图谱搜索 |
-| `plugin__dsh-ontoext-siis__relation_analysis` | 双边关系分析 |
-| `plugin__dsh-ontoext-siis__alert_query` | 预警查询 |
-| `plugin__dsh-ontoext-siis__topic_etc` | 话题管理 |
-| `plugin__dsh-ontoext-siis__topic_create` | 创建话题 |
-| `plugin__dsh-ontoext-siis__crawl_execute` | 执行爬取 |
-| `plugin__dsh-ontoext-siis__nlp_extract` | NLP 实体抽取 |
-| `plugin__dsh-ontoext-siis__report_generate` | 报告生成 |
+| `plugin__dsh-ontolab-siis__ontology_list` | 列出本体版本 |
+| `plugin__dsh-ontolab-siis__ontology_query` | 查询概念定义与层级 |
+| `plugin__dsh-ontolab-siis__ontology_search` | 模糊搜索概念 |
+| `plugin__dsh-ontolab-siis__kg_query` | 知识图谱查询 |
+| `plugin__dsh-ontolab-siis__kg_search` | 知识图谱搜索 |
+| `plugin__dsh-ontolab-siis__relation_analysis` | 双边关系分析 |
+| `plugin__dsh-ontolab-siis__alert_query` | 预警查询 |
+| `plugin__dsh-ontolab-siis__topic_etc` | 话题管理 |
+| `plugin__dsh-ontolab-siis__topic_create` | 创建话题 |
+| `plugin__dsh-ontolab-siis__crawl_execute` | 执行爬取 |
+| `plugin__dsh-ontolab-siis__nlp_extract` | NLP 实体抽取 |
+| `plugin__dsh-ontolab-siis__report_generate` | 报告生成 |
 
 ## 配置项
 
@@ -181,14 +183,14 @@ curl -X POST http://localhost:8090/api/harness/plugins/activate \
 dsh-onto-base  ←── dsh-onto-flow  ←── dsh-onto-app
        ↑                  ↑
        └── dsh-onto-plugin │
-                           └── dsh-ontoext-siis-app
-                                   └── dsh-ontoext-siis-plugin
-dsh-onto-visulization ←── dsh-onto-app
+                           └── dsh-ontolab-siis-app
+                                   └── dsh-ontolab-siis-plugin
+dsh-onto-qa / dsh-onto-viz / dsh-onto-metric ←── dsh-onto-app
 ```
 
 - **base**：不依赖任何业务模块，仅依赖 Spring Boot 基础设施
 - **flow**：依赖 base，包含认证授权 + 工作台 + 全局聚合
-- **app**：聚合 base + flow + visulization，可独立部署的平台应用
+- **app**：聚合 base + flow + qa + viz + metric，可独立部署的平台应用
 - **SIIS app**：依赖 base + flow，包含四域业务 + 完整 schema
 - **plugin**：依赖 base，输出平台工具 JAR
 - **SIIS plugin**：依赖 base，输出业务工具 JAR
@@ -206,4 +208,4 @@ dsh-onto-visulization ←── dsh-onto-app
 mvn test
 ```
 
-7 个模块共 115 个测试，覆盖单元测试、集成测试和端到端测试。
+8 个模块共 115 个测试，覆盖单元测试、集成测试和端到端测试。

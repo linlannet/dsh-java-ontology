@@ -8,7 +8,7 @@
 > 另含 **2 个统一层视图**（v_unified_monitor、v_unified_kg）
 
 > **说明**：本文档只包含底层（base/flow/report）的表结构，全部采用 `onto_` 前缀。
-> SIIS 项目层表（`gwy_` 前缀）见 `dsh-ontoext-siis/docs/DB-DESIGN.md`。
+> SIIS 项目层表（`gwy_` 前缀）见 `dsh-ontolab-siis/docs/DB-DESIGN.md`。
 > v0.2.1 新增 `onto_ontology_*`（8 张）：6 张从 SIIS 迁移至产品层（加 `domain` 列支持多业务方向），2 张全新（动态属性 + 通用关系）。
 
 ---

@@ -1,7 +1,7 @@
 -- ================================================================
 -- dsh_java_ontodb：单库合并 schema
 -- 共 69 张表：33 张 onto_ 共享层表 + 36 张 gwy_ SIIS 业务层表
--- 对应文档：docs/0.2.1/ONTO_DB_DESIGN.md（onto_）+ dsh-ontoext-siis 既有 schema（gwy_）
+-- 对应文档：docs/0.2.1/ONTO_DB_DESIGN.md（onto_）+ dsh-ontolab-siis 既有 schema（gwy_）
 -- 生成时间：2026-10-18，2026-10-19 合并 gwy_ 业务表
 -- 注意：库本身由部署预建（JDBC URL 已指定库名），迁移只负责 schema，
 --       不包含 CREATE DATABASE / USE 等 MySQL 管理语句（H2 测试库不兼容）。
@@ -669,7 +669,7 @@ CREATE TABLE IF NOT EXISTS onto_common_merge_log (
 
 -- ================================================================
 -- 八、SIIS 业务层 gwy_ 表（36 张：ontology/track/analyze/display）
--- 摘自 dsh-ontoext-siis-app 的 V1.0.0（dsh_java_ontodb 单库合并 schema，
+-- 摘自 dsh-ontolab-siis-app 的 V1.0.0（dsh_java_ontodb 单库合并 schema，
 -- DatabaseSchemaTest 断言 onto_ + gwy_ 全量表共存于同一库）
 -- ================================================================
 

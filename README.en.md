@@ -29,12 +29,14 @@ dsh-java-ontology/
 │   ├── src/main/java/net/linlan/dsh/plat/          Platform orchestration (OntologyController/HarnessAi/Workline)
 │   ├── src/main/java/net/linlan/dsh/global/        Global knowledge aggregation (Aggregation/GlobalKnowledge/KnowledgeAggregator)
 │   └── src/main/java/net/linlan/dsh/workspace/     Unified workspace (WorkspaceController)
-├── dsh-onto-visulization/                  Visualization: frontend static assets (HTML/CSS/JS)
-├── dsh-onto-app/                           Aggregation app: base + flow + visulization (port 8100)
+├── dsh-onto-qa/                            QA: data analysis + reporting + Q&A (template/section/chart/session/task)
+├── dsh-onto-viz/                           Visualization: frontend static assets (HTML/CSS/JS)
+├── dsh-onto-metric/                        Metric: business object/process/decision + atom/derived/composite metric + dependency tree
+├── dsh-onto-app/                           Aggregation app: base + flow + qa + viz + metric (port 8100)
 ├── dsh-onto-plugin/                        Plugin output: 3 platform tools (workspace/knowledge/director)
-└── dsh-ontoext-siis/                       SIIS subproject
-    ├── dsh-ontoext-siis-app/               SIIS app: four-domain business + full schema (port 8101)
-    └── dsh-ontoext-siis-plugin/            SIIS plugin output: 12 business tools
+└── dsh-ontolab-siis/                       SIIS subproject
+    ├── dsh-ontolab-siis-app/               SIIS app: four-domain business + full schema (port 8101)
+    └── dsh-ontolab-siis-plugin/            SIIS plugin output: 12 business tools
 ```
 
 ```text
@@ -42,7 +44,7 @@ Browser ──► Admin UI (8100) ──► Admin API ──► Ontology Store
                │
                └─ AI Chat ──► dsh-java (8090)
                                  ├─► dsh-onto-plugin (3 tools) ──► Platform API
-                                 └─► dsh-ontoext-siis-plugin (12 tools) ──► SIIS API
+                                 └─► dsh-ontolab-siis-plugin (12 tools) ──► SIIS API
 ```
 
 ### Table Naming Convention
@@ -93,13 +95,13 @@ Open <http://127.0.0.1:8100>.
 ### 3. Start the SIIS App (Four-Domain Business)
 
 ```bash
-java -jar dsh-ontoext-siis/dsh-ontoext-siis-app/target/dsh-ontoext-siis-app-0.2.1-exec.jar
+java -jar linlannet/dsh-ontolab-siis-app/target/dsh-ontolab-siis-app-0.2.1-exec.jar
 ```
 
 Or in dev mode:
 
 ```bash
-mvn spring-boot:run -pl dsh-ontoext-siis/dsh-ontoext-siis-app
+mvn spring-boot:run -pl linlannet/dsh-ontolab-siis-app
 ```
 
 Open <http://127.0.0.1:8101>.
@@ -135,31 +137,31 @@ curl -X POST http://localhost:8090/api/harness/plugins/activate \
 ### SIIS Plugin (12 tools)
 
 ```bash
-JAR="$PWD/dsh-ontoext-siis/dsh-ontoext-siis-plugin/target/dsh-ontoext-siis-plugin-0.2.1.jar"
+JAR="$PWD/linlannet/dsh-ontolab-siis-plugin/target/dsh-ontolab-siis-plugin-0.2.1.jar"
 
 curl -X POST http://localhost:8090/api/harness/plugins/install \
   -H 'Content-Type: application/json' \
-  -d "{\"pluginId\":\"dsh-ontoext-siis\",\"displayName\":\"DSH Ontoext SIIS Plugin\",\"pluginVersion\":\"0.2.1\",\"runtimeType\":\"JAVA_NATIVE\",\"sourcePath\":\"$JAR\",\"entrypoint\":\"dsh-ontoext-siis-plugin-0.2.1.jar\"}"
+  -d "{\"pluginId\":\"dsh-ontolab-siis\",\"displayName\":\"DSH Ontolab SIIS Plugin\",\"pluginVersion\":\"0.2.1\",\"runtimeType\":\"JAVA_NATIVE\",\"sourcePath\":\"$JAR\",\"entrypoint\":\"dsh-ontolab-siis-plugin-0.2.1.jar\"}"
 
 curl -X POST http://localhost:8090/api/harness/plugins/activate \
   -H 'Content-Type: application/json' \
-  -d '{"pluginId":"dsh-ontoext-siis"}'
+  -d '{"pluginId":"dsh-ontolab-siis"}'
 ```
 
 | Tool | Description |
 | --- | --- |
-| `plugin__dsh-ontoext-siis__ontology_list` | List ontology versions |
-| `plugin__dsh-ontoext-siis__ontology_query` | Query concept definitions and hierarchy |
-| `plugin__dsh-ontoext-siis__ontology_search` | Fuzzy search concepts |
-| `plugin__dsh-ontoext-siis__kg_query` | Knowledge graph query |
-| `plugin__dsh-ontoext-siis__kg_search` | Knowledge graph search |
-| `plugin__dsh-ontoext-siis__relation_analysis` | Bilateral relation analysis |
-| `plugin__dsh-ontoext-siis__alert_query` | Alert query |
-| `plugin__dsh-ontoext-siis__topic_etc` | Topic management |
-| `plugin__dsh-ontoext-siis__topic_create` | Create topic |
-| `plugin__dsh-ontoext-siis__crawl_execute` | Execute crawl |
-| `plugin__dsh-ontoext-siis__nlp_extract` | NLP entity extraction |
-| `plugin__dsh-ontoext-siis__report_generate` | Report generation |
+| `plugin__dsh-ontolab-siis__ontology_list` | List ontology versions |
+| `plugin__dsh-ontolab-siis__ontology_query` | Query concept definitions and hierarchy |
+| `plugin__dsh-ontolab-siis__ontology_search` | Fuzzy search concepts |
+| `plugin__dsh-ontolab-siis__kg_query` | Knowledge graph query |
+| `plugin__dsh-ontolab-siis__kg_search` | Knowledge graph search |
+| `plugin__dsh-ontolab-siis__relation_analysis` | Bilateral relation analysis |
+| `plugin__dsh-ontolab-siis__alert_query` | Alert query |
+| `plugin__dsh-ontolab-siis__topic_etc` | Topic management |
+| `plugin__dsh-ontolab-siis__topic_create` | Create topic |
+| `plugin__dsh-ontolab-siis__crawl_execute` | Execute crawl |
+| `plugin__dsh-ontolab-siis__nlp_extract` | NLP entity extraction |
+| `plugin__dsh-ontolab-siis__report_generate` | Report generation |
 
 ## Configuration
 
@@ -181,14 +183,14 @@ curl -X POST http://localhost:8090/api/harness/plugins/activate \
 dsh-onto-base  ←── dsh-onto-flow  ←── dsh-onto-app
        ↑                  ↑
        └── dsh-onto-plugin │
-                           └── dsh-ontoext-siis-app
-                                   └── dsh-ontoext-siis-plugin
-dsh-onto-visulization ←── dsh-onto-app
+                           └── dsh-ontolab-siis-app
+                                   └── dsh-ontolab-siis-plugin
+dsh-onto-qa / dsh-onto-viz / dsh-onto-metric ←── dsh-onto-app
 ```
 
 - **base**: No business module dependencies; only Spring Boot infrastructure
 - **flow**: Depends on base; contains auth + workspace + global aggregation
-- **app**: Aggregates base + flow + visulization; independently deployable platform app
+- **app**: Aggregates base + flow + qa + viz + metric; independently deployable platform app
 - **SIIS app**: Depends on base + flow; contains four-domain business + full schema
 - **plugin**: Depends on base; outputs platform tool JAR
 - **SIIS plugin**: Depends on base; outputs business tool JAR
@@ -206,4 +208,4 @@ dsh-onto-visulization ←── dsh-onto-app
 mvn test
 ```
 
-7 modules with 115 tests total, covering unit tests, integration tests, and end-to-end tests.
+8 modules with 115 tests total, covering unit tests, integration tests, and end-to-end tests.

@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * 聚合应用入口控制类
  * <p>应用层唯一端点前缀 {@code /api/app}，提供应用元信息、入口端点清单与健康自检，
- * 不与 base/flow/report/visulization 模块端点（/api/ontologies、/api/workline、/api/auth 等）重复。</p>
+ * 不与 base/flow/qa/viz/metric 模块端点（/api/ontologies、/api/workline、/api/auth 等）重复。</p>
  * <p>元信息端点标记 {@code @PublicApi}：无业务数据泄露，供网关探活与运维使用。</p>
  * @author Linlan
  * CreatedAt 2026-10-19

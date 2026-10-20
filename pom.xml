@@ -41,10 +41,13 @@
     <modules>
         <module>dsh-onto-base</module>
         <module>dsh-onto-flow</module>
-        <module>dsh-onto-report</module>
-        <module>dsh-onto-visulization</module>
+        <module>dsh-onto-qa</module>
+        <module>dsh-onto-viz</module>
+        <module>dsh-onto-metric</module>
         <module>dsh-onto-app</module>
         <module>dsh-onto-plugin</module>
+        <module>dsh-ontolab-siis/dsh-ontolab-siis-app</module>
+        <module>dsh-ontolab-siis/dsh-ontolab-siis-plugin</module>
     </modules>
 
     <properties>

@@ -19,9 +19,9 @@ import java.util.Map;
 
 /**
  * 聚合应用元信息服务
- * <p>从 Spring MVC 映射注册表提取全部入口端点，并按模块归属（app/base/flow/report）分组；
+ * <p>从 Spring MVC 映射注册表提取全部入口端点，并按模块归属（app/base/flow/qa/viz/metric）分组；
  * 数据库与 Flyway 迁移状态用于应用健康自检。</p>
- * <p>本服务是应用层专属能力，不与 base/flow/report/visulization 任何业务端点重叠。</p>
+ * <p>本服务是应用层专属能力，不与 base/flow/qa/viz/metric 任何业务端点重叠。</p>
  * @author Linlan
  * CreatedAt 2026-10-19
  * @version 1.0
@@ -30,7 +30,7 @@ import java.util.Map;
 @Service
 public class AppMetaService {
 
-    private static final List<String> MODULES = List.of("app", "base", "flow", "report", "visulization");
+    private static final List<String> MODULES = List.of("app", "base", "flow", "qa", "viz", "metric");
 
     private final OntologyAppProperties properties;
     private final Environment environment;
@@ -107,14 +107,17 @@ public class AppMetaService {
         return health;
     }
 
-    /** 按处理器包名归属模块：onto→app，report→report，plat/sys/global/workspace→flow，其余→base */
+    /** 按处理器包名归属模块：onto→app，qa→qa，metric→metric，plat/sys/global/workspace→flow，其余→base */
     private String moduleOf(Class<?> beanType) {
         String packageName = beanType.getPackage() != null ? beanType.getPackageName() : "";
         if (packageName.startsWith("net.linlan.dsh.onto.")) {
             return "app";
         }
-        if (packageName.startsWith("net.linlan.dsh.report.")) {
-            return "report";
+        if (packageName.startsWith("net.linlan.dsh.qa.")) {
+            return "qa";
+        }
+        if (packageName.startsWith("net.linlan.dsh.metric.")) {
+            return "metric";
         }
         if (packageName.startsWith("net.linlan.dsh.global.")
                 || packageName.startsWith("net.linlan.dsh.plat.")

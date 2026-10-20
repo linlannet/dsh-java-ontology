@@ -3,10 +3,10 @@
 ## 版本号：0.2.1
 - 更新日期：2026-10-18
 
-1. 工程由双模块拆分为六模块：`dsh-onto-base`（静态本体定义 + 规则 + 通用基础设施）、`dsh-onto-flow`（认证授权 + 工作台 + 全局知识聚合）、`dsh-onto-report`（报告）、`dsh-onto-visulization`（前端静态资源）、`dsh-onto-app`（聚合应用）、`dsh-onto-plugin`（平台工具插件）
+1. 工程由双模块拆分为六模块：`dsh-onto-base`（静态本体定义 + 规则 + 通用基础设施）、`dsh-onto-flow`（认证授权 + 工作台 + 全局知识聚合）、`dsh-onto-qa`（报告）、`dsh-onto-viz`（前端静态资源）、`dsh-onto-app`（聚合应用）、`dsh-onto-plugin`（平台工具插件）
 2. 版本号升级至 0.2.1，`dsh-java-types` 契约依赖升级至 0.2.1
 3. `flow` 新增认证授权体系（JWT + BCrypt + 主任/研究员/访客三级角色）、统一工作台、全局知识聚合（个人 → 公共 → 全局三级知识架构）
-4. 新增 `dsh-onto-report` 报告模块，报告表收敛（`ADR-004`）
+4. 新增 `dsh-onto-qa` 报告模块，报告表收敛（`ADR-004`）
 5. Harness 插件：平台插件 3 个工具 + SIIS 插件 12 个工具，共 15 个原子工具注册到 dsh-java
 6. SIIS 子项目（`dsh-ontoext-siis`）补齐四域业务（ontology / trace / display / analyze）与 Flyway 迁移脚本 V1.0.0~V1.0.5，应用端口 8101
 7. 表命名规范统一为前缀制（`onto_sys_` / `onto_common_` / `onto_global_` / `gwy_*`），共 52 张表 + 2 视图（`v_unified_monitor`、`v_unified_kg`）
