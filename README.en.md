@@ -1,6 +1,6 @@
 # dsh-java-ontology
 
-An ontology knowledge engineering platform with a **base + flow + SIIS** three-layer architecture: static ontology definitions and rule logic at the base layer, dynamic ontology and workspace orchestration at the flow layer, and SIIS traditional business domains (ontology/trace/display/analyze) at the top layer. Ships with two `dsh-java` Java Native Plugins that let AI Agents safely query and search the ontology knowledge base.
+An ontology knowledge engineering platform with a **base + flow + domain capability packs** three-layer architecture: static ontology definitions, rules, and shared infrastructure at the base layer (`dsh-onto-base`); dynamic ontology, authentication, and workspace orchestration at the flow layer (`dsh-onto-flow`); and composable domain capability packs at the top layer (Q&A `qa`, visualization `viz`, metrics `metric`). `dsh-onto-app` aggregates them into an independently deployable platform app (port 8100), while `dsh-onto-plugin` ships a `dsh-java` Java Native Plugin (3 atomic tools) that lets AI Agents safely query and search the ontology knowledge base. The repo also ships 3 Agent configs and 4 Skill packs.
 
 ## Features
 
@@ -10,10 +10,10 @@ An ontology knowledge engineering platform with a **base + flow + SIIS** three-l
 - **Fuzzy Search**: Quickly locate concepts and entities by keyword
 - **Multi-Tenant Auth**: JWT + BCrypt authentication with director/researcher/guest three-level roles
 - **Workflow Orchestration**: State machine transitions + task dependencies + parallel execution
-- **Crawl Engine**: Rate limiting + proxy rotation + retry + scheduled crawling
-- **Multilingual NLP**: Chinese/English/French/Arabic strategies + ontology matching + KG normalization
 - **Global Knowledge Aggregation**: Three-tier knowledge architecture (personal → common → global) + KG convergence
-- **Harness Plugins**: 15 atomic tools registered with dsh-java for Agent invocation
+- **Q&A Reporting**: Report and Q&A orchestration across template/section/chart/session/task
+- **Metric Modeling**: Business object/process/decision + atom/derived/composite metrics + dependency tree
+- **Harness Plugin**: 3 atomic tools registered with dsh-java for Agent invocation
 
 ## Architecture
 
@@ -34,32 +34,33 @@ dsh-java-ontology/
 ├── dsh-onto-metric/                        Metric: business object/process/decision + atom/derived/composite metric + dependency tree
 ├── dsh-onto-app/                           Aggregation app: base + flow + qa + viz + metric (port 8100)
 ├── dsh-onto-plugin/                        Plugin output: 3 platform tools (workspace/knowledge/director)
-└── dsh-ontolab-siis/                       SIIS subproject
-    ├── dsh-ontolab-siis-app/               SIIS app: four-domain business + full schema (port 8101)
-    └── dsh-ontolab-siis-plugin/            SIIS plugin output: 12 business tools
+├── agents/                                 3 Agent configs (director-assistant/research-assistant/topic-creator)
+├── skills/                                 4 Skill packs (hotspot-analysis/knowledge-extraction/report-generation/topic-creation)
+└── docs/                                   Design docs (0.2.1 specs / 0.2.2 designs / ADR / contracts / ops)
 ```
 
 ```text
-Browser ──► Admin UI (8100) ──► Admin API ──► Ontology Store
+Browser ──► Admin UI (8100) ──► Admin API ──► Onto DB (default `ontology_db`)
                │
                └─ AI Chat ──► dsh-java (8090)
-                                 ├─► dsh-onto-plugin (3 tools) ──► Platform API
-                                 └─► dsh-ontolab-siis-plugin (12 tools) ──► SIIS API
+                                 └─► dsh-onto-plugin (3 tools) ──► Platform API
 ```
 
 ### Table Naming Convention
 
-| Prefix | Layer | Module | Table Count |
+| Prefix | Domain | Module | Table Count |
 | --- | --- | --- | --- |
-| `onto_sys_` | Auth & permissions | flow | 1 |
-| `onto_common_` | Personal knowledge precipitation | flow | 4 |
+| `onto_sys_` | Auth & permissions | flow | 4 |
+| `onto_common_` | Personal knowledge precipitation | flow | 6 |
+| `onto_notify_` | Messages & subscriptions | flow | 2 |
+| `onto_ontology_` | Ontology library | base | 9 |
+| `onto_report_` | Q&A & reporting | qa | 7 |
 | `onto_global_` | Global knowledge aggregation | flow | 5 |
-| `gwy_ontology_` | Ontology library | SIIS | 14 |
-| `gwy_track_` | Tracking & collection | SIIS | 11 |
-| `gwy_analyze_` | Analysis & alerts | SIIS | 7 |
-| `gwy_display_` | Display & presentation | SIIS | 10 |
+| `onto_metric_` | Metrics | metric | 5 |
 
-52 tables total + 2 views (`v_unified_monitor`, `v_unified_kg`).
+38 tables total, created by Flyway scripts `V1.0.0~V1.0.1` (`dsh-onto-app`) and `V1.0.2` (`dsh-onto-metric`).
+
+> Split leftover: `V1.0.0__init_schema.sql` still contains 36 `gwy_*` business tables from the merged era; they will be removed from this repo once SIIS is extracted as a standalone project.
 
 ## Requirements
 
@@ -92,29 +93,13 @@ mvn spring-boot:run -pl dsh-onto-app
 
 Open <http://127.0.0.1:8100>.
 
-### 3. Start the SIIS App (Four-Domain Business)
+### 3. Use the AI Assistant (Optional)
 
-```bash
-java -jar linlannet/dsh-ontolab-siis-app/target/dsh-ontolab-siis-app-0.2.1-exec.jar
-```
+AI chat depends on `dsh-java` (default `http://127.0.0.1:8090`) for the Agent runtime, and requires the plugin from this repo to be installed (see below).
 
-Or in dev mode:
+### 4. Install the Harness Plugin (3 tools)
 
-```bash
-mvn spring-boot:run -pl linlannet/dsh-ontolab-siis-app
-```
-
-Open <http://127.0.0.1:8101>.
-
-### 4. Use the AI Assistant (Optional)
-
-AI chat depends on `dsh-java` (default `http://127.0.0.1:8090`) for the Agent runtime, and requires the plugins from this repo to be installed (see below).
-
-## Install Harness Plugins
-
-Start `dsh-java` (port 8090) first, then install the platform plugin and SIIS plugin separately:
-
-### Platform Plugin (3 tools)
+Start `dsh-java` (port 8090) first:
 
 ```bash
 JAR="$PWD/dsh-onto-plugin/target/dsh-onto-plugin-0.2.1.jar"
@@ -134,40 +119,13 @@ curl -X POST http://localhost:8090/api/harness/plugins/activate \
 | `plugin__dsh-onto__knowledge_aggregate` | Knowledge aggregation |
 | `plugin__dsh-onto__director_overview` | Director decision overview |
 
-### SIIS Plugin (12 tools)
-
-```bash
-JAR="$PWD/linlannet/dsh-ontolab-siis-plugin/target/dsh-ontolab-siis-plugin-0.2.1.jar"
-
-curl -X POST http://localhost:8090/api/harness/plugins/install \
-  -H 'Content-Type: application/json' \
-  -d "{\"pluginId\":\"dsh-ontolab-siis\",\"displayName\":\"DSH Ontolab SIIS Plugin\",\"pluginVersion\":\"0.2.1\",\"runtimeType\":\"JAVA_NATIVE\",\"sourcePath\":\"$JAR\",\"entrypoint\":\"dsh-ontolab-siis-plugin-0.2.1.jar\"}"
-
-curl -X POST http://localhost:8090/api/harness/plugins/activate \
-  -H 'Content-Type: application/json' \
-  -d '{"pluginId":"dsh-ontolab-siis"}'
-```
-
-| Tool | Description |
-| --- | --- |
-| `plugin__dsh-ontolab-siis__ontology_list` | List ontology versions |
-| `plugin__dsh-ontolab-siis__ontology_query` | Query concept definitions and hierarchy |
-| `plugin__dsh-ontolab-siis__ontology_search` | Fuzzy search concepts |
-| `plugin__dsh-ontolab-siis__kg_query` | Knowledge graph query |
-| `plugin__dsh-ontolab-siis__kg_search` | Knowledge graph search |
-| `plugin__dsh-ontolab-siis__relation_analysis` | Bilateral relation analysis |
-| `plugin__dsh-ontolab-siis__alert_query` | Alert query |
-| `plugin__dsh-ontolab-siis__topic_etc` | Topic management |
-| `plugin__dsh-ontolab-siis__topic_create` | Create topic |
-| `plugin__dsh-ontolab-siis__crawl_execute` | Execute crawl |
-| `plugin__dsh-ontolab-siis__nlp_extract` | NLP entity extraction |
-| `plugin__dsh-ontolab-siis__report_generate` | Report generation |
+> The 12 additional business tools for the four-domain business are provided by the companion project `dsh-ontolab-siis`; see [dsh-ontolab-siis/README.md](dsh-ontolab-siis/README.md) for installation.
 
 ## Configuration
 
 | Property | Env Var | Default | Description |
 | --- | --- | --- | --- |
-| `server.port` | — | `8100` / `8101` | Aggregation app / SIIS app port |
+| `server.port` | — | `8100` | Aggregation app port |
 | `spring.datasource.url` | `DB_HOST` / `DB_PORT` / `DB_NAME` | `127.0.0.1:3306/ontology_db` | Database connection |
 | `spring.datasource.username` | `DB_USER` | `root` | Database username |
 | `spring.datasource.password` | `DB_PASSWORD` | `root` | Database password |
@@ -181,26 +139,39 @@ curl -X POST http://localhost:8090/api/harness/plugins/activate \
 
 ```text
 dsh-onto-base  ←── dsh-onto-flow  ←── dsh-onto-app
-       ↑                  ↑
-       └── dsh-onto-plugin │
-                           └── dsh-ontolab-siis-app
-                                   └── dsh-ontolab-siis-plugin
+       ↑
+       └── dsh-onto-plugin
 dsh-onto-qa / dsh-onto-viz / dsh-onto-metric ←── dsh-onto-app
 ```
 
 - **base**: No business module dependencies; only Spring Boot infrastructure
 - **flow**: Depends on base; contains auth + workspace + global aggregation
+- **qa**: Depends on base + flow; reporting and Q&A orchestration
+- **viz**: Frontend static asset pack
+- **metric**: Depends on base; metric modeling and dependency tree
 - **app**: Aggregates base + flow + qa + viz + metric; independently deployable platform app
-- **SIIS app**: Depends on base + flow; contains four-domain business + full schema
-- **plugin**: Depends on base; outputs platform tool JAR
-- **SIIS plugin**: Depends on base; outputs business tool JAR
+- **plugin**: Depends on base; outputs the 3-tool platform plugin JAR
+
+## Companion Project
+
+| Project | Location | Description |
+| --- | --- | --- |
+| `dsh-ontolab-siis` | `dsh-ontolab-siis/` (standalone directory with its own parent pom, not tracked in this repo) | Four-domain business (ontology/trace/display/analyze) + 38 `gwy_*` tables + 12 business tools, port 8101; see [dsh-ontolab-siis/README.md](dsh-ontolab-siis/README.md) |
 
 ## Security Boundary
 
-- **AI pipeline is tool-based**: Plugins register 15 atomic tools; Agents access business capabilities via tool calls.
+- **AI pipeline is tool-based**: This repo registers 3 atomic tools; Agents access platform capabilities via tool calls.
 - Queries default to 15-second timeout and max 100 results.
 - JWT authentication + three-level role permissions (director/researcher/guest) + multi-tenant data isolation.
 - Production deployment must change the default JWT secret and database password, and configure CORS/CSRF policies.
+
+## Documentation
+
+- `docs/0.2.1`: Platform design & spec, ONTO_DB_DESIGN, architecture comparison, plugin split plan, hotspot analysis spec & task list
+- `docs/0.2.2`: Design review, static/dynamic ontology implementation plans, methodology & practice articles
+- `docs/adr`: ADR-001~005 architecture decision records
+- `docs/contract/permissions.yaml`: Permission contract
+- `docs/dev-ops/dsh_java_ontodb.sql`: Ontology database schema
 
 ## Testing
 
@@ -208,4 +179,4 @@ dsh-onto-qa / dsh-onto-viz / dsh-onto-metric ←── dsh-onto-app
 mvn test
 ```
 
-8 modules with 115 tests total, covering unit tests, integration tests, and end-to-end tests.
+13 test classes (3 in `dsh-onto-base`, 10 in `dsh-onto-app`) with 74 test methods total, covering unit tests, integration tests, and end-to-end tests.
