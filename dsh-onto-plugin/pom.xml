@@ -23,7 +23,7 @@
 
     <scm>
         <url>https://github.com/linlannet/dsh-java-ontology/tree/main/dsh-onto-plugin</url>
-        <connection>scm:git:git://gitee.com/linlannet/linlannet.git</connection>
+        <connection>scm:git:git://github.com/linlannet/linlannet.git</connection>
     </scm>
 
     <dependencies>

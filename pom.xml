@@ -21,7 +21,7 @@
 
     <scm>
         <url>https://github.com/linlannet/dsh-java-ontology/tree/main</url>
-        <connection>scm:git:git://gitee.com/linlannet/linlannet.git</connection>
+        <connection>scm:git:git://github.com/linlannet/linlannet.git</connection>
     </scm>
 
     <developers>
@@ -30,7 +30,7 @@
             <name>linlan info</name>
             <email>linlannet@163.com</email>
             <organization>Linlan Corporation</organization>
-            <url>https://gitee.com/linlaninfo</url>
+            <url>https://github.com/linlannet</url>
             <roles>
                 <role>Member</role>
             </roles>
