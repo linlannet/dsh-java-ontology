@@ -169,7 +169,7 @@ dsh-onto-qa / dsh-onto-viz / dsh-onto-metric ←── dsh-onto-app
 
 - `docs/0.2.1`: Platform design & spec, ONTO_DB_DESIGN, architecture comparison, plugin split plan, hotspot analysis spec & task list
 - `docs/0.2.2`: Design review, static/dynamic ontology implementation plans, methodology & practice articles
-- `docs/adr`: ADR-001~005 architecture decision records
+- `docs/0.2.2/adr`: ADR-001~005 architecture decision records
 - `docs/contract/permissions.yaml`: Permission contract
 - `docs/dev-ops/dsh_java_ontodb.sql`: Ontology database schema
 

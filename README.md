@@ -169,7 +169,7 @@ dsh-onto-qa / dsh-onto-viz / dsh-onto-metric ←── dsh-onto-app
 
 - `docs/0.2.1`：平台设计与规格、ONTO_DB_DESIGN、架构对比、插件拆分方案、热点分析 spec 与任务清单
 - `docs/0.2.2`：设计评审、静态/动态本体实施方案、方法论与实践文章
-- `docs/adr`：ADR-001~005 架构决策记录
+- `docs/0.2.2/adr`：ADR-001~005 架构决策记录
 - `docs/contract/permissions.yaml`：权限契约
 - `docs/dev-ops/dsh_java_ontodb.sql`：本体库 schema
 

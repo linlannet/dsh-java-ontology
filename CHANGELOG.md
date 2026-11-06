@@ -1,6 +1,14 @@
 # 版本
 
-## 版本号：0.2.1-2
+## 版本号：0.2.2
+- 更新日期：2026-11-03
+
+1. 内部版本号与 dsh-java 0.2.2 对齐（由 0.2.1 升级）
+2. `dsh-onto-base` / `dsh-onto-plugin` / `dsh-ontolab-siis-plugin` 三处 `dsh-java-types` 契约依赖升级 0.2.1 → 0.2.2（保持 `provided` scope）
+3. 顶层及全部子模块 parent/自身版本统一至 0.2.2（共 11 个 pom、14 处声明）
+4. 修正历史版本位口径：`0.2.1-1` / `0.2.1-2` 的版本位统一为 `0.2.1`（与 pom 声明对齐，迭代序号移入标题备注）
+
+## 版本号：0.2.1（迭代 2）
 - 更新日期：2026-10-22
 
 1. 模块结构定型为七包：`dsh-onto-base` / `dsh-onto-flow` / `dsh-onto-qa`（问数，由 `dsh-onto-report` 更名）/ `dsh-onto-viz`（可视化，由 `dsh-onto-visulization` 更名）/ `dsh-onto-metric`（新增指标包）/ `dsh-onto-app` / `dsh-onto-plugin`
@@ -14,7 +22,7 @@
 - **dsh-onto-metric**：指标建模 + Flyway `V1.0.2__metric_tables.sql`（`onto_metric_` 5 张表）
 - **README.md / README.en.md**：架构树、运行链路图、快速开始、配置项、模块依赖、安全边界同步去除 SIIS 内容
 
-## 版本号：0.2.1-1
+## 版本号：0.2.1（迭代 1）
 - 更新日期：2026-10-18
 
 1. 工程由双模块拆分为六模块：`dsh-onto-base`（静态本体定义 + 规则 + 通用基础设施）、`dsh-onto-flow`（认证授权 + 工作台 + 全局知识聚合）、`dsh-onto-qa`（报告）、`dsh-onto-viz`（前端静态资源）、`dsh-onto-app`（聚合应用）、`dsh-onto-plugin`（平台工具插件）
@@ -24,7 +32,7 @@
 5. Harness 插件：平台插件 3 个工具（SIIS 插件 12 个工具自 0.2.2 起随 SIIS 独立工程迁出）
 6. SIIS 子项目（`dsh-ontoext-siis`，后更名 `dsh-ontolab-siis`）补齐四域业务（ontology / trace / display / analyze）与 Flyway 迁移脚本 V1.0.0~V1.0.5，应用端口 8101
 7. 表命名规范统一为前缀制（`onto_sys_` / `onto_common_` / `onto_global_` / `gwy_*`），共 52 张表 + 2 视图（`v_unified_monitor`、`v_unified_kg`）
-8. 新增文档体系：`docs/0.2.1`（平台设计与规格、ONTO_DB_DESIGN、架构对比、插件拆分方案、热点分析 spec 与任务清单）、`docs/adr/ADR-001~005`、`docs/contract/permissions.yaml`、`docs/dev-ops/dsh_java_ontodb.sql`
+8. 新增文档体系：`docs/0.2.1`（平台设计与规格、ONTO_DB_DESIGN、架构对比、插件拆分方案、热点分析 spec 与任务清单）、`docs/0.2.2/adr`、`docs/contract/permissions.yaml`、`docs/dev-ops/dsh_java_ontodb.sql`
 9. 新增 Agent 配置 3 份（director-assistant / research-assistant / topic-creator）与 Skill 4 份（hotspot-analysis / knowledge-extraction / report-generation / topic-creation）
 
 - **dsh-onto-base**：本体七模型 YAML（m1~m7 + manifest）、通用 `PageRequest`/`Result`/`BaseEntity`/`BaseRepository`、插件基类（`AdminApiClient` + `BaseOntologyTool`）
