@@ -1,6 +1,8 @@
 package net.linlan.dsh.metric.repository;
 
 import net.linlan.dsh.metric.entity.*;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -13,6 +15,8 @@ import java.util.List;
 
 /**
  * 指标层仓储类
+ * <p>指标表属于平台层（ontodb）。双数据源应用（如 siis）中优先使用 {@code ontoJdbcTemplate}，
+ * 单数据源应用（dsh-onto-app）下回退默认 {@code jdbcTemplate}，保证两种部署形态行为一致。</p>
  * @author Linlan
  * CreatedAt 2026-10-20
  * @version 1.0
@@ -23,8 +27,10 @@ public class MetricRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public MetricRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public MetricRepository(JdbcTemplate jdbcTemplate,
+                            @Qualifier("ontoJdbcTemplate") ObjectProvider<JdbcTemplate> ontoJdbcTemplateProvider) {
+        JdbcTemplate ontoJdbc = ontoJdbcTemplateProvider.getIfAvailable();
+        this.jdbcTemplate = ontoJdbc != null ? ontoJdbc : jdbcTemplate;
     }
 
     public List<MetricBusinessObject> findAllBusinessObjects(Long tenantId) {

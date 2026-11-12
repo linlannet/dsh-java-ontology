@@ -1,0 +1,725 @@
+# M1 对象模型元文件（产品层 base）- m1-object-model.yaml
+# 通用本体平台框架：版本/实体/多语种/事件类型/地名/术语 + 动态属性/通用关系
+# 多业务方向支持：siis / factory / ecommerce / city-ops（通过 domain 字段隔离）
+model_type: OBJECT
+version: "3.0"
+domain: "通用本体知识库平台"
+
+aggregates:
+  - id: AGG-SYS-USER-001
+    name: 系统用户
+    alias: SysUser
+    aggregateType: AGGREGATE_ROOT
+    description: 平台用户，含主任/研究员/访客三种角色层级
+    lifecycle: [正常, 停用]
+    tags: [系统域, 共享层]
+    attributes:
+      - { name: userId, label: 用户ID, type: Long, required: true, unique: true }
+      - { name: tenantId, label: 租户ID, type: Long, required: false, description: "主任可为NULL" }
+      - { name: roleLevel, label: 角色层级, type: Enum, enumValues: [0_主任, 1_研究员, 2_访客], required: true, defaultValue: "2" }
+      - { name: userName, label: 用户名, type: String, required: true, unique: true }
+      - { name: nickName, label: 昵称, type: String, required: false }
+      - { name: email, label: 邮箱, type: String, required: false }
+      - { name: phonenumber, label: 手机号, type: String, required: false }
+      - { name: password, label: 密码, type: String, required: true, description: "加密存储" }
+      - { name: status, label: 状态, type: Enum, enumValues: [0_正常, 1_停用], required: true, defaultValue: "0" }
+      - { name: loginIp, label: 最后登录IP, type: String, required: false }
+      - { name: loginDate, label: 最后登录时间, type: DateTime, required: false }
+
+  # ══════════════════════════════════════════════════════════
+  # 二、本体域 gwy_ontology_（14 实体，共享层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-ONT-VERSION-001
+    name: 本体版本
+    alias: OntologyVersion
+    aggregateType: AGGREGATE_ROOT
+    description: 本体知识库版本记录，支持多版本管理
+    lifecycle: [草稿, 发布, 归档]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: versionCode, label: 版本号, type: String, required: true }
+      - { name: versionName, label: 版本名称, type: String, required: false }
+      - { name: entityCount, label: 实体数量, type: Integer, defaultValue: "0" }
+      - { name: source, label: 数据来源, type: String, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [0_草稿, 1_发布, 2_归档], defaultValue: "0" }
+
+  - id: AGG-ONT-ENTITY-001
+    name: 本体实体
+    alias: OntologyEntity
+    aggregateType: AGGREGATE_ROOT
+    description: 通用本体实体表，支持 country/organization/person/location/media/book/paper/term 等类别
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: category, label: 类别, type: Enum, enumValues: [country, organization, person, location, media, book, paper, term], required: true }
+      - { name: entityName, label: 实体名称, type: String, required: true, description: "默认中文" }
+      - { name: lang, label: 主语种, type: Enum, enumValues: [zh, en, fr, ar, ru, es, ja, de], defaultValue: "zh" }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: source, label: 来源, type: String, required: false }
+      - { name: wikiUrl, label: Wiki链接, type: String, required: false }
+      - { name: status, label: 状态, type: Integer, defaultValue: "1" }
+    entities:
+      - name: 多语种翻译
+        alias: OntologyI18n
+        description: 本体实体的多语种翻译记录
+        localId: id
+        cardinality: ZERO_OR_MORE
+        cascadeDelete: true
+        attributes:
+          - { name: id, label: 主键, type: Long, required: true }
+          - { name: entityId, label: 关联实体ID, type: Long, required: true }
+          - { name: category, label: 本体分类, type: String, required: true }
+          - { name: lang, label: 语种, type: Enum, enumValues: [en, fr, ar, ru, es, ja, de], required: true }
+          - { name: name, label: 该语种名称, type: String, required: false }
+          - { name: description, label: 该语种描述, type: Text, required: false }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 国家名称, type: String, required: true }
+      - { name: isoCode, label: ISO代码, type: String, required: false, unique: true }
+      - { name: continent, label: 所属洲, type: String, required: false }
+      - { name: capital, label: 首都, type: String, required: false }
+      - { name: language, label: 主要语言, type: String, required: false }
+      - { name: currency, label: 货币, type: String, required: false }
+      - { name: population, label: 人口, type: String, required: false }
+      - { name: area, label: 面积, type: String, required: false }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 机构名称, type: String, required: true }
+      - { name: orgType, label: 类型, type: Enum, enumValues: [government, ngo, company, media, university], required: false }
+      - { name: country, label: 所属国家, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: website, label: 官网, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 姓名, type: String, required: true }
+      - { name: gender, label: 性别, type: String, required: false }
+      - { name: birthDate, label: 出生日期, type: String, required: false }
+      - { name: country, label: 国籍, type: String, required: false }
+      - { name: occupation, label: 职业, type: String, required: false }
+      - { name: title, label: 头衔, type: String, required: false }
+      - { name: affiliation, label: 所属机构, type: String, required: false }
+      - { name: bio, label: 简介, type: Text, required: false }
+      - { name: portraitUrl, label: 头像URL, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: hotspotName, label: 热点名称, type: String, required: true }
+      - { name: hotspotType, label: 类型, type: String, required: false }
+      - { name: keywords, label: 关键词JSON, type: Text, required: false }
+      - { name: relatedCountries, label: 相关国家, type: String, required: false }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: heatScore, label: 热度分, type: Integer, defaultValue: "0" }
+      - { name: riskLevel, label: 风险等级, type: Enum, enumValues: [low, medium, high, critical], defaultValue: "low" }
+
+  - id: AGG-ONT-TERM-001
+    name: 术语
+    alias: OntologyTerm
+    aggregateType: AGGREGATE_ROOT
+    description: 术语库，含分类、定义、来源
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: termName, label: 术语名, type: String, required: true }
+      - { name: category, label: 分类, type: String, required: false }
+      - { name: definition, label: 定义, type: Text, required: false }
+      - { name: source, label: 来源, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+  - id: AGG-ONT-EVENT-TYPE-001
+    name: 事件类型
+    alias: OntologyEventType
+    aggregateType: AGGREGATE_ROOT
+    description: 事件类型库，树形结构，含父类型和排序
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: eventType, label: 事件类型, type: String, required: true }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: parentId, label: 父类型ID, type: Long, required: false, description: "树形结构" }
+      - { name: sortOrder, label: 排序, type: Integer, defaultValue: "0" }
+
+  - id: AGG-ONT-LOCATION-001
+    name: 地名
+    alias: OntologyLocation
+    aggregateType: AGGREGATE_ROOT
+    description: 地名信息库，含类型/父级/所属国家/人口/面积等
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 地名, type: String, required: true }
+      - { name: locType, label: 类型, type: Enum, enumValues: [country, city, region, river, mountain], required: false }
+      - { name: parentId, label: 父级ID, type: Long, required: false }
+      - { name: country, label: 所属国家, type: String, required: false }
+      - { name: capital, label: 首都, type: String, required: false }
+      - { name: population, label: 人口, type: String, required: false }
+      - { name: area, label: 面积, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 媒体名称, type: String, required: true }
+      - { name: mediaType, label: 类型, type: Enum, enumValues: [newspaper, magazine, tv, radio, web, news_agency], required: false }
+      - { name: country, label: 所属国家, type: String, required: false }
+      - { name: language, label: 语言, type: String, required: false }
+      - { name: website, label: 官网, type: String, required: false }
+      - { name: audience, label: 受众规模, type: String, required: false }
+      - { name: biasRating, label: 倾向评级, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: title, label: 书名, type: String, required: true }
+      - { name: author, label: 作者, type: String, required: false }
+      - { name: publisher, label: 出版社, type: String, required: false }
+      - { name: publishYear, label: 出版年, type: String, required: false }
+      - { name: isbn, label: ISBN, type: String, required: false }
+      - { name: pages, label: 页数, type: Integer, required: false }
+      - { name: category, label: 分类, type: String, required: false }
+      - { name: summary, label: 摘要, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: title, label: 论文标题, type: String, required: true }
+      - { name: author, label: 作者, type: String, required: false }
+      - { name: institution, label: 机构, type: String, required: false }
+      - { name: journal, label: 期刊, type: String, required: false }
+      - { name: publishYear, label: 发表年份, type: String, required: false }
+      - { name: doi, label: DOI, type: String, required: false }
+      - { name: summary, label: 摘要, type: Text, required: false }
+      - { name: keywords, label: 关键词, type: String, required: false }
+      - { name: category, label: 学科分类, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: countryA, label: 国家A, type: String, required: true }
+      - { name: countryB, label: 国家B, type: String, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: relationLevel, label: 关系级别, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: startYear, label: 起始年份, type: String, required: false }
+
+  # ══════════════════════════════════════════════════════════
+  # 三、信息监测域 gwy_track_（11 实体，个人层）
+  # ══════════════════════════════════════════════════════════
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleHash, label: 文章哈希, type: String, required: true, description: "去重用" }
+      - { name: title, label: 标题, type: String, required: false }
+      - { name: url, label: 原文URL, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+      - { name: published, label: 发布时间, type: DateTime, required: false }
+      - { name: source, label: 来源, type: String, required: false }
+      - { name: sourceId, label: 采集源ID, type: Long, required: false }
+      - { name: topicId, label: 关联主题ID, type: Long, required: false }
+      - { name: crawlTaskId, label: 采集任务ID, type: Long, required: false }
+      - { name: sentiment, label: 情感, type: Enum, enumValues: [positive, negative, neutral], required: false }
+      - { name: sentimentScore, label: 情感得分, type: Float, required: false }
+      - { name: nlpStatus, label: NLP状态, type: Enum, enumValues: [PENDING, COMPLETED], defaultValue: "PENDING" }
+      - { name: content, label: 正文摘要, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: sourceName, label: 源名称, type: String, required: true }
+      - { name: sourceType, label: 类型, type: Enum, enumValues: [website, rss, api, search_engine, database], required: false }
+      - { name: url, label: URL, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+      - { name: category, label: 分类, type: Enum, enumValues: [academic, government, media], required: false }
+      - { name: enabled, label: 是否启用, type: Integer, defaultValue: "1" }
+      - { name: intervalMinutes, label: 采集间隔, type: Integer, defaultValue: "60" }
+      - { name: lastCrawlTime, label: 上次采集时间, type: DateTime, required: false }
+      - { name: lastStatus, label: 上次状态, type: String, required: false }
+      - { name: lastArticleCount, label: 上次采集数量, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: subscriptionName, label: 订阅名称, type: String, required: true }
+      - { name: sourceIds, label: 关联源ID列表, type: String, required: false }
+      - { name: keywordGroupId, label: 关键词组ID, type: Long, required: false }
+      - { name: userId, label: 订阅用户ID, type: Long, required: false }
+      - { name: enabled, label: 是否启用, type: Integer, defaultValue: "1" }
+      - { name: intervalMinutes, label: 采集间隔, type: Integer, defaultValue: "60" }
+      - { name: startTime, label: 开始时间, type: Time, required: false }
+      - { name: endTime, label: 结束时间, type: Time, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: taskName, label: 任务名称, type: String, required: true }
+      - { name: sourceId, label: 采集源ID, type: Long, required: false }
+      - { name: subscriptionId, label: 订阅ID, type: Long, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [pending, running, success, failed], defaultValue: "pending" }
+      - { name: scheduledTime, label: 计划时间, type: DateTime, required: false }
+      - { name: crawlFrequency, label: 采集频率, type: String, required: false }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: articleCount, label: 采集文章数, type: Integer, defaultValue: "0" }
+      - { name: errorMsg, label: 错误信息, type: Text, required: false }
+      - { name: retryCount, label: 重试次数, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: groupName, label: 关键词组名称, type: String, required: true }
+      - { name: keywordsZh, label: 中文关键词JSON, type: Text, required: false }
+      - { name: keywordsEn, label: 英文关键词JSON, type: Text, required: false }
+      - { name: keywordsFr, label: 法文关键词JSON, type: Text, required: false }
+      - { name: keywordsAr, label: 阿拉伯文关键词JSON, type: Text, required: false }
+      - { name: matchMode, label: 匹配模式, type: Enum, enumValues: [and, or], defaultValue: "or" }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+      - { name: enabled, label: 是否启用, type: Integer, defaultValue: "1" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: importName, label: 导入名称, type: String, required: true }
+      - { name: importType, label: 导入类型, type: Enum, enumValues: [csv, excel, json, database, api], required: false }
+      - { name: filePath, label: 文件路径, type: String, required: false }
+      - { name: fileSize, label: 文件大小, type: Long, defaultValue: "0" }
+      - { name: recordCount, label: 记录数, type: Integer, defaultValue: "0" }
+      - { name: targetTable, label: 目标表, type: String, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [pending, running, success, failed], defaultValue: "pending" }
+      - { name: errorRows, label: 错误行数, type: Integer, defaultValue: "0" }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: errorLog, label: 错误日志, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: exportName, label: 导出名称, type: String, required: true }
+      - { name: exportType, label: 导出类型, type: Enum, enumValues: [csv, excel, json, pdf], required: false }
+      - { name: sourceTable, label: 源表, type: String, required: false }
+      - { name: filterConditions, label: 筛选条件JSON, type: Text, required: false }
+      - { name: filePath, label: 文件路径, type: String, required: false }
+      - { name: fileSize, label: 文件大小, type: Long, defaultValue: "0" }
+      - { name: recordCount, label: 导出记录数, type: Integer, defaultValue: "0" }
+      - { name: status, label: 状态, type: Enum, enumValues: [pending, running, success, failed], defaultValue: "pending" }
+      - { name: downloadToken, label: 下载Token, type: String, required: false }
+      - { name: expireTime, label: 过期时间, type: DateTime, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: nodeId, label: 节点ID, type: String, required: true }
+      - { name: nodeType, label: 节点类型, type: String, required: false }
+      - { name: nodeName, label: 节点名称, type: String, required: false }
+      - { name: nodeNameZh, label: 节点中文名, type: String, required: false }
+      - { name: ontologyEntityId, label: 关联本体实体ID, type: Long, required: false }
+      - { name: properties, label: 节点属性, type: Json, required: false }
+      - { name: weight, label: 权重, type: Float, defaultValue: "1.0" }
+      - { name: sourceArticleIds, label: 来源文章ID列表JSON, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: sourceNodeId, label: 源节点ID, type: String, required: true }
+      - { name: targetNodeId, label: 目标节点ID, type: String, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: relationName, label: 关系名称, type: String, required: false }
+      - { name: properties, label: 关系属性, type: Json, required: false }
+      - { name: weight, label: 权重, type: Float, defaultValue: "1.0" }
+      - { name: articleId, label: 证据文章ID, type: Long, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: topicId, label: 主题ID, type: Long, required: false }
+      - { name: buildStatus, label: 构建状态, type: Enum, enumValues: [running, success, failed], defaultValue: "running" }
+      - { name: nodeCount, label: 节点数, type: Integer, defaultValue: "0" }
+      - { name: edgeCount, label: 边数, type: Integer, defaultValue: "0" }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: errorLog, label: 错误日志, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleId, label: 文章ID, type: Long, required: true }
+      - { name: elementWhen, label: 时间要素, type: Json, required: false }
+      - { name: elementWhere, label: 地点要素, type: Json, required: false }
+      - { name: elementWho, label: 人物要素, type: Json, required: false }
+      - { name: elementWhat, label: 事件要素, type: Json, required: false }
+      - { name: elementHow, label: 方式要素, type: Json, required: false }
+      - { name: elementWhy, label: 原因要素, type: Json, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  # ══════════════════════════════════════════════════════════
+  # 四、信息分析域 gwy_analyze_（7 实体，个人层）
+  # ══════════════════════════════════════════════════════════
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: topicName, label: 主题名称, type: String, required: true }
+      - { name: topicType, label: 主题类型, type: String, required: false }
+      - { name: hotspotRegion, label: 关注区域, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: keywordGroupId, label: 关键词组ID, type: Long, required: false }
+      - { name: crawlSourceIds, label: 采集源ID列表, type: String, required: false }
+      - { name: alertRuleIds, label: 告警规则ID列表, type: String, required: false }
+      - { name: userId, label: 创建用户ID, type: Long, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [active, paused, closed], defaultValue: "active" }
+      - { name: alertEnabled, label: 是否启用告警, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+    entities:
+      - name: 主题要素
+        alias: AnalyzeTrackElement
+        description: 主题关联的要素（国家/人物/机构/事件/时间）
+        localId: id
+        cardinality: ZERO_OR_MORE
+        cascadeDelete: true
+        attributes:
+          - { name: id, label: 主键, type: Long, required: true }
+          - { name: topicId, label: 主题ID, type: Long, required: true }
+          - { name: elementType, label: 要素类型, type: Enum, enumValues: [country, person, org, event, time], required: false }
+          - { name: elementValue, label: 要素值, type: String, required: false }
+          - { name: elementName, label: 要素名称, type: String, required: false }
+          - { name: weight, label: 权重, type: Integer, defaultValue: "1" }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleId, label: 文章ID, type: Long, required: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: entityValue, label: 实体值, type: String, required: false }
+      - { name: entityName, label: 实体名, type: String, required: false }
+      - { name: startPos, label: 起始位置, type: Integer, required: false }
+      - { name: endPos, label: 结束位置, type: Integer, required: false }
+      - { name: confidence, label: 置信度, type: Float, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleId, label: 文章ID, type: Long, required: true }
+      - { name: subject, label: 主语, type: String, required: false }
+      - { name: predicate, label: 谓词, type: String, required: false }
+      - { name: obj, label: 宾语, type: String, required: false }
+      - { name: subjectType, label: 主语类型, type: String, required: false }
+      - { name: objectType, label: 宾语类型, type: String, required: false }
+      - { name: confidence, label: 置信度, type: Float, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleId, label: 文章ID, type: Long, required: true }
+      - { name: sentiment, label: 情感, type: Enum, enumValues: [positive, negative, neutral], required: false }
+      - { name: score, label: 情感得分, type: Float, required: false }
+      - { name: confidence, label: 置信度, type: Float, required: false }
+      - { name: positiveWords, label: 正面词列表, type: Text, required: false }
+      - { name: negativeWords, label: 负面词列表, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: ruleName, label: 规则名称, type: String, required: true }
+      - { name: ruleType, label: 规则类型, type: Enum, enumValues: [keyword, topic, sentiment, event], required: false }
+      - { name: conditionConfig, label: 条件配置JSON, type: Text, required: false }
+      - { name: alertLevel, label: 告警级别, type: Enum, enumValues: [low, medium, high, critical], defaultValue: "low" }
+      - { name: alertChannel, label: 告警渠道, type: Enum, enumValues: [email, feishu, sms], required: false }
+      - { name: alertTarget, label: 告警目标, type: String, required: false }
+      - { name: enabled, label: 是否启用, type: Integer, defaultValue: "1" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: modelName, label: 模型名称, type: String, required: true }
+      - { name: modelVersion, label: 模型版本, type: String, required: false }
+      - { name: modelType, label: 模型类型, type: Enum, enumValues: [ner, sentiment, ner_multi], required: false }
+      - { name: modelPath, label: 模型路径, type: String, required: false }
+      - { name: accuracy, label: 准确率, type: Float, required: false }
+      - { name: precisionVal, label: 精确率, type: Float, required: false }
+      - { name: recallVal, label: 召回率, type: Float, required: false }
+      - { name: f1Val, label: F1分数, type: Float, required: false }
+      - { name: trainDataCount, label: 训练数据量, type: Integer, defaultValue: "0" }
+      - { name: deployed, label: 是否已部署, type: Integer, defaultValue: "0" }
+      - { name: deployedTime, label: 部署时间, type: DateTime, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  # ══════════════════════════════════════════════════════════
+  # 五、展示交互域 gwy_display_（10 实体，个人层）
+  # ══════════════════════════════════════════════════════════
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: templateName, label: 模板名称, type: String, required: true }
+      - { name: templateCode, label: 模板编码, type: String, required: false }
+      - { name: templateType, label: 模板类型, type: Enum, enumValues: [daily, weekly, monthly, custom], required: false }
+      - { name: templateContent, label: 模板内容, type: Text, required: false }
+      - { name: defaultParams, label: 默认参数JSON, type: Text, required: false }
+      - { name: sort, label: 排序, type: Integer, defaultValue: "0" }
+      - { name: status, label: 状态, type: Integer, defaultValue: "1" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: reportName, label: 报告名称, type: String, required: true }
+      - { name: reportType, label: 报告类型, type: String, required: false }
+      - { name: templateId, label: 模板ID, type: Long, required: false }
+      - { name: topicId, label: 主题ID, type: Long, required: false }
+      - { name: userId, label: 生成用户ID, type: Long, required: false }
+      - { name: timeRangeStart, label: 时间范围开始, type: DateTime, required: false }
+      - { name: timeRangeEnd, label: 时间范围结束, type: DateTime, required: false }
+      - { name: params, label: 生成参数JSON, type: Text, required: false }
+      - { name: content, label: 报告内容, type: Text, required: false }
+      - { name: filePath, label: 文件路径, type: String, required: false }
+      - { name: fileSize, label: 文件大小, type: Long, defaultValue: "0" }
+      - { name: status, label: 状态, type: Enum, enumValues: [draft, published, archived], defaultValue: "draft" }
+      - { name: viewCount, label: 浏览次数, type: Integer, defaultValue: "0" }
+      - { name: scope, label: 可见范围, type: Enum, enumValues: [TENANT, GLOBAL], defaultValue: "TENANT" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: ruleId, label: 规则ID, type: Long, required: false }
+      - { name: ruleName, label: 规则名称, type: String, required: false }
+      - { name: alertLevel, label: 告警级别, type: String, required: false }
+      - { name: alertTitle, label: 告警标题, type: String, required: false }
+      - { name: alertContent, label: 告警内容, type: Text, required: false }
+      - { name: triggerArticleId, label: 触发文章ID, type: Long, required: false }
+      - { name: triggerKeywords, label: 触发关键词, type: String, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [unread, read, resolved], defaultValue: "unread" }
+      - { name: resolvedBy, label: 处理人, type: String, required: false }
+      - { name: resolvedTime, label: 处理时间, type: DateTime, required: false }
+      - { name: resolvedComment, label: 处理备注, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: publishTitle, label: 发布标题, type: String, required: true }
+      - { name: publishType, label: 发布类型, type: String, required: false }
+      - { name: content, label: 内容, type: Text, required: false }
+      - { name: authorId, label: 作者ID, type: Long, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [draft, published, archived], defaultValue: "draft" }
+      - { name: publishTime, label: 发布时间, type: DateTime, required: false }
+      - { name: category, label: 分类, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: pushType, label: 推送类型, type: Enum, enumValues: [email, rss, feishu], required: false }
+      - { name: pushTarget, label: 推送目标, type: String, required: false }
+      - { name: articleIds, label: 文章ID列表JSON, type: Text, required: false }
+      - { name: reportId, label: 关联报告ID, type: Long, required: false }
+      - { name: subject, label: 标题, type: String, required: false }
+      - { name: content, label: 内容, type: Text, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [pending, success, failed], defaultValue: "pending" }
+      - { name: sendTime, label: 发送时间, type: DateTime, required: false }
+      - { name: errorMsg, label: 错误信息, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: userId, label: 用户ID, type: Long, required: false }
+      - { name: recType, label: 推荐类型, type: Enum, enumValues: [article, report, topic, entity], required: false }
+      - { name: recTargetId, label: 推荐目标ID, type: Long, required: false }
+      - { name: recTitle, label: 推荐标题, type: String, required: false }
+      - { name: recScore, label: 推荐得分, type: Float, required: false }
+      - { name: recReason, label: 推荐理由, type: String, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [unread, read, adopted, dismissed], defaultValue: "unread" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: entityId, label: 实体ID, type: Long, required: false }
+      - { name: entityName, label: 实体名称, type: String, required: false }
+      - { name: keywords, label: 关键词, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+      - { name: indexData, label: 索引数据, type: Json, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: conferenceName, label: 会议名称, type: String, required: true }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: location, label: 地点, type: String, required: false }
+      - { name: organizer, label: 主办方, type: String, required: false }
+      - { name: participants, label: 参会人员JSON, type: Text, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [upcoming, ongoing, ended, cancelled], defaultValue: "upcoming" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: columnName, label: 栏目名称, type: String, required: true }
+      - { name: columnCode, label: 栏目编码, type: String, required: false }
+      - { name: tableName, label: 关联表名, type: String, required: false }
+      - { name: visible, label: 是否可见, type: Integer, defaultValue: "1" }
+      - { name: sortOrder, label: 排序, type: Integer, defaultValue: "0" }
+      - { name: config, label: 配置JSON, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: userId, label: 用户ID, type: Long, required: true }
+      - { name: moduleCode, label: 模块编码, type: String, required: false }
+      - { name: moduleName, label: 模块名称, type: String, required: false }
+      - { name: configData, label: 配置数据JSON, type: Text, required: false }
+      - { name: isVisible, label: 是否显示, type: Integer, defaultValue: "1" }
+      - { name: sortOrder, label: 排序, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  # ══════════════════════════════════════════════════════════
+  # 六、知识沉淀域 gwy_common_（4 实体，个人层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-CMN-DISCOVERED-ENTITY-001
+    name: 发现实体
+    alias: CommonDiscoveredEntity
+    aggregateType: AGGREGATE_ROOT
+    description: 个人发现的实体，含来源主题/首次发现时间/提及次数/晋升状态
+    lifecycle: [DISCOVERED, PROMOTED]
+    tags: [沉淀域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityName, label: 实体名称, type: String, required: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: sourceTopicId, label: 来源主题ID, type: Long, required: false }
+      - { name: firstSeenTime, label: 首次发现时间, type: DateTime, required: false }
+      - { name: mentionCount, label: 提及次数, type: Integer, defaultValue: "1" }
+      - { name: ontologyEntityId, label: 关联本体实体ID, type: Long, required: false, description: "晋升后回填" }
+      - { name: status, label: 状态, type: Enum, enumValues: [DISCOVERED, PROMOTED], defaultValue: "DISCOVERED" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-CMN-TENANT-RELATION-001
+    name: 租户关系资产
+    alias: CommonTenantRelationAsset
+    aggregateType: AGGREGATE_ROOT
+    description: 租户关系资产，含主体/客体实体/关系类型/平均得分/关联主题
+    lifecycle: [有效, 无效]
+    tags: [沉淀域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: subjectEntityId, label: 主体实体ID, type: Long, required: true }
+      - { name: objectEntityId, label: 客体实体ID, type: Long, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: avgScore, label: 平均得分, type: Float, required: false }
+      - { name: topicIds, label: 关联主题ID列表, type: String, required: false }
+      - { name: lastUpdated, label: 最后更新时间, type: DateTime, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-CMN-VECTOR-INDEX-001
+    name: 个人向量索引
+    alias: CommonPersonalVectorIndex
+    aggregateType: AGGREGATE_ROOT
+    description: 个人向量索引，含实体/类型/嵌入向量/模型版本
+    lifecycle: [有效, 无效]
+    tags: [沉淀域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityId, label: 实体ID, type: Long, required: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: embedding, label: 向量嵌入, type: Blob, required: false }
+      - { name: modelVersion, label: 模型版本, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-CMN-LLM-CHAT-001
+    name: LLM对话历史
+    alias: CommonLlmChatHistory
+    aggregateType: AGGREGATE_ROOT
+    description: LLM对话历史，含Agent名称/角色/内容/会话ID
+    lifecycle: [有效, 无效]
+    tags: [沉淀域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: agentName, label: Agent名称, type: String, required: false }
+      - { name: role, label: 角色, type: Enum, enumValues: [user, assistant, system], required: false }
+      - { name: content, label: 内容, type: Text, required: false }
+      - { name: sessionId, label: 会话ID, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  # ══════════════════════════════════════════════════════════
+  # 七、全局汇聚域 gwy_global_（5 实体，共享层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-GLB-DISCOVERED-ENTITY-001
+    name: 全局发现实体
+    alias: GlobalDiscoveredEntity
+    aggregateType: AGGREGATE_ROOT
+    description: 全局发现实体，汇聚多租户发现，含来源租户列表/总提及次数/时间范围
+    lifecycle: [有效, 无效]
+    tags: [全局域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityName, label: 实体名称, type: String, required: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: tenantIds, label: 来源租户ID列表JSON, type: String, required: false }
+      - { name: totalMentionCount, label: 总提及次数, type: Integer, defaultValue: "0" }
+      - { name: firstSeenTime, label: 首次发现时间, type: DateTime, required: false }
+      - { name: lastSeenTime, label: 最后发现时间, type: DateTime, required: false }
+
+  - id: AGG-GLB-BILATERAL-001
+    name: 全局双边关系
+    alias: GlobalBilateralRelation
+    aggregateType: AGGREGATE_ROOT
+    description: 全局双边关系，汇聚多租户关系，含主体/客体/关系类型/平均得分/样本数
+    lifecycle: [有效, 无效]
+    tags: [全局域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: subjectEntityName, label: 主体实体名, type: String, required: true }
+      - { name: objectEntityName, label: 客体实体名, type: String, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: tenantIds, label: 来源租户ID列表JSON, type: String, required: false }
+      - { name: avgScore, label: 平均得分, type: Float, required: false }
+      - { name: sampleCount, label: 样本数, type: Integer, defaultValue: "0" }
+
+  - id: AGG-GLB-KG-NODE-001
+    name: 全局图谱节点
+    alias: GlobalKgNode
+    aggregateType: AGGREGATE_ROOT
+    description: 全局知识图谱节点，含关联本体实体/节点名称/类型/来源租户/跨租户权重
+    lifecycle: [有效, 无效]
+    tags: [全局域, 共享层, 知识图谱]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: ontologyEntityId, label: 关联本体实体ID, type: Long, required: false }
+      - { name: nodeName, label: 节点名称, type: String, required: false }
+      - { name: nodeType, label: 节点类型, type: String, required: false }
+      - { name: tenantIds, label: 来源租户ID列表JSON, type: String, required: false }
+      - { name: crossTenantWeight, label: 跨租户权重, type: Float, defaultValue: "1.0" }
+
+  - id: AGG-GLB-KG-EDGE-001
+    name: 全局图谱边
+    alias: GlobalKgEdge
+    aggregateType: AGGREGATE_ROOT
+    description: 全局知识图谱边，含源/目标节点/关系类型/来源租户/跨租户权重
+    lifecycle: [有效, 无效]
+    tags: [全局域, 共享层, 知识图谱]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: sourceNodeId, label: 源节点ID, type: String, required: true }
+      - { name: targetNodeId, label: 目标节点ID, type: String, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: tenantIds, label: 来源租户ID列表JSON, type: String, required: false }
+      - { name: crossTenantWeight, label: 跨租户权重, type: Float, defaultValue: "1.0" }
+
+  - id: AGG-GLB-AGG-LOG-001
+    name: 全局汇聚日志
+    alias: GlobalAggregationLog
+    aggregateType: AGGREGATE_ROOT
+    description: 全局汇聚日志，含汇聚类型/触发类型/实体数/关系数/耗时/状态
+    lifecycle: [running, success, failed]
+    tags: [全局域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: aggregationType, label: 汇聚类型, type: Enum, enumValues: [FULL, INCREMENTAL], required: false }
+      - { name: triggerType, label: 触发类型, type: Enum, enumValues: [SCHEDULED, EVENT, MANUAL], required: false }
+      - { name: entityCount, label: 实体数量, type: Integer, defaultValue: "0" }
+      - { name: relationCount, label: 关系数量, type: Integer, defaultValue: "0" }
+      - { name: durationMs, label: 耗时毫秒, type: Long, defaultValue: "0" }
+      - { name: status, label: 状态, type: Enum, enumValues: [running, success, failed], defaultValue: "running" }
+
+  # ══════════════════════════════════════════════════════════
+  # 新增：动态属性扩展 + 通用关系（多业务方向支持）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-ONT-ATTRIBUTE-001
+    name: 本体动态属性
+    alias: OntologyAttribute
+    aggregateType: AGGREGATE_ROOT
+    description: 本体实体的动态属性扩展，支持各业务方向自定义字段（工厂设备额定功率/电商商品价格/城市设施养护周期等）
+    lifecycle: [有效, 无效]
+    tags: [本体域, 底层, 动态扩展]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityId, label: 关联实体ID, type: Long, required: true }
+      - { name: attrName, label: 属性名, type: String, required: true, description: "如 rated_power / price / lifespan" }
+      - { name: attrValue, label: 属性值, type: Text, required: false }
+      - { name: attrType, label: 属性类型, type: Enum, enumValues: [STRING, NUMBER, DATE, JSON, BOOLEAN], defaultValue: "STRING" }
+      - { name: domain, label: 业务方向, type: String, defaultValue: "siis", description: "siis/factory/ecommerce/city-ops" }
+
+  - id: AGG-ONT-RELATION-001
+    name: 通用关系
+    alias: OntologyRelation
+    aggregateType: AGGREGATE_ROOT
+    description: 通用实体间关系表，支持双边关系/供应关系/包含关系/管理关系等
+    lifecycle: [有效, 无效]
+    tags: [本体域, 底层, 通用关系]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: subjectEntityId, label: 主体实体ID, type: Long, required: true }
+      - { name: objectEntityId, label: 客体实体ID, type: Long, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: true, description: "bilateral/supply/contain/manage" }
+      - { name: relationLevel, label: 关系级别, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: domain, label: 业务方向, type: String, defaultValue: "siis" }

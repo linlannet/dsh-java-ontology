@@ -1,0 +1,149 @@
+# M3 规则模型元文件（产品层 base）- m3-rule-model.yaml
+# 通用规则：本体校验 + 多语种校验 + 晋升资格 + 沉淀去重 + 汇聚去重 + 角色权限 + 租户隔离
+model_type: RULE
+version: "3.0"
+domain: "通用本体知识库平台"
+
+rules:
+  - id: RULE-ONT-NAME-NOT-EMPTY
+    name: 本体实体名称非空
+    ruleType: VALIDATION
+    description: 本体实体名称不能为空
+    inputParams:
+      - { name: entityName, type: String, sourceField: OntologyEntity.entityName, required: true }
+    outputType: Boolean
+    expression: |
+      entityName != null AND LENGTH(TRIM(entityName)) > 0
+    reusedBy: [Ontology_Create, Ontology_Promote]
+    version: "1.0"
+
+      - { name: lang, type: String, sourceField: OntologyI18n.lang, required: true }
+    outputType: Boolean
+    expression: |
+      lang != 'zh'
+    reusedBy: [Ontology_I18n_Save]
+    version: "1.0"
+
+  - id: RULE-PROMOTE-ELIGIBLE
+    name: 发现实体晋升资格
+    ruleType: VALIDATION
+    description: 发现实体状态为 DISCOVERED 且名称非空时方可晋升
+    inputParams:
+      - { name: status, type: String, sourceField: CommonDiscoveredEntity.status, required: true }
+      - { name: entityName, type: String, sourceField: CommonDiscoveredEntity.entityName, required: true }
+    outputType: Boolean
+    expression: |
+      status == 'DISCOVERED' AND LENGTH(TRIM(entityName)) > 0
+    reusedBy: [Ontology_Promote]
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # 二、监测域规则
+  # ══════════════════════════════════════════════════════════
+      - { name: url, type: String, sourceField: TrackCrawlSource.url, required: true }
+    outputType: Boolean
+    expression: |
+      url != null AND (url STARTS_WITH 'http://' OR url STARTS_WITH 'https://')
+    reusedBy: [CrawlSource_Create]
+    version: "1.0"
+
+      - { name: lastCrawlTime, type: DateTime, sourceField: TrackCrawlSource.lastCrawlTime, required: true }
+      - { name: intervalMinutes, type: Integer, sourceField: TrackCrawlSource.intervalMinutes, required: true }
+      - { name: currentTime, type: DateTime, sourceField: System.currentTime, required: true }
+    outputType: Boolean
+    expression: |
+      currentTime >= lastCrawlTime + intervalMinutes * 60000
+    reusedBy: [CrawlTask_Execute]
+    version: "1.0"
+
+      - { name: articleHash, type: String, sourceField: TrackArticle.articleHash, required: true }
+      - { name: tenantId, type: Long, sourceField: TrackArticle.tenantId, required: true }
+    outputType: Boolean
+    expression: |
+      NOT EXISTS(TrackArticle WHERE articleHash == this.articleHash AND tenantId == this.tenantId AND del_flag == 0)
+    reusedBy: [Article_Save]
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # 三、分析域规则
+  # ══════════════════════════════════════════════════════════
+      - { name: deployed, type: Integer, sourceField: AnalyzeNlpVersion.deployed, required: true }
+    outputType: Boolean
+    expression: |
+      deployed == 1
+    reusedBy: [Nlp_Process]
+    version: "1.0"
+
+      - { name: ruleType, type: String, sourceField: AnalyzeAlertRule.ruleType, required: true }
+      - { name: conditionConfig, type: String, sourceField: AnalyzeAlertRule.conditionConfig, required: true }
+      - { name: articleContent, type: String, sourceField: TrackArticle.content, required: true }
+    outputType: Boolean
+    expression: |
+      IF ruleType == 'keyword' THEN evaluateKeywordMatch(conditionConfig, articleContent)
+      ELSE IF ruleType == 'sentiment' THEN evaluateSentimentMatch(conditionConfig, articleContent)
+      ELSE IF ruleType == 'event' THEN evaluateEventMatch(conditionConfig, articleContent)
+      ELSE false
+    reusedBy: [Alert_Check]
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # 四、沉淀域规则
+  # ══════════════════════════════════════════════════════════
+  - id: RULE-DISCOVERED-DEDUP
+    name: 发现实体去重
+    ruleType: VALIDATION
+    description: 同租户同类型实体名称不重复记录
+    inputParams:
+      - { name: entityName, type: String, sourceField: CommonDiscoveredEntity.entityName, required: true }
+      - { name: entityType, type: String, sourceField: CommonDiscoveredEntity.entityType, required: true }
+      - { name: tenantId, type: Long, sourceField: CommonDiscoveredEntity.tenantId, required: true }
+    outputType: Boolean
+    expression: |
+      NOT EXISTS(CommonDiscoveredEntity WHERE entityName == this.entityName AND entityType == this.entityType AND tenantId == this.tenantId AND del_flag == 0)
+    reusedBy: [DiscoveredEntity_Record]
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # 五、全局汇聚域规则
+  # ══════════════════════════════════════════════════════════
+  - id: RULE-AGGREGATE-DEDUP
+    name: 汇聚去重
+    ruleType: VALIDATION
+    description: 全局汇聚时按实体名称+类型去重，合并租户列表
+    inputParams:
+      - { name: entityName, type: String, sourceField: GlobalDiscoveredEntity.entityName, required: true }
+      - { name: entityType, type: String, sourceField: GlobalDiscoveredEntity.entityType, required: true }
+    outputType: Boolean
+    expression: |
+      NOT EXISTS(GlobalDiscoveredEntity WHERE entityName == this.entityName AND entityType == this.entityType AND del_flag == 0)
+    reusedBy: [Global_Aggregate_Entity, Global_Aggregate_Relation, Global_Aggregate_KG]
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # 六、角色权限规则
+  # ══════════════════════════════════════════════════════════
+  - id: ROLE-DIRECTOR-ONLY
+    name: 主任专属操作
+    ruleType: VALIDATION
+    description: 统一层视图和全局汇聚仅主任角色可操作
+    inputParams:
+      - { name: roleLevel, type: Integer, sourceField: SysUser.roleLevel, required: true }
+    outputType: Boolean
+    expression: |
+      roleLevel == 0
+    reusedBy: [Global_QueryUnified, Global_Aggregate]
+    version: "1.0"
+
+  - id: RULE-TENANT-ISOLATION
+    name: 租户隔离
+    ruleType: VALIDATION
+    description: 个人层数据查询时租户ID必须匹配
+    inputParams:
+      - { name: resourceTenantId, type: Long, sourceField: BaseEntity.tenantId, required: true }
+      - { name: userTenantId, type: Long, sourceField: SysUser.tenantId, required: true }
+      - { name: roleLevel, type: Integer, sourceField: SysUser.roleLevel, required: true }
+    outputType: Boolean
+    expression: |
+      roleLevel == 0 OR resourceTenantId == userTenantId
+    reusedBy: [Track_QueryList, Analyze_QueryTopic, Display_QueryReport]
+    version: "1.0"

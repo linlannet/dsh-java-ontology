@@ -83,6 +83,19 @@ public class WorkspaceRepository {
         return clazz;
     }
 
+    /** 租户过滤片段；租户为空（主任跨租户视角）时不追加过滤条件. */
+    private String tenantClause() {
+        return TenantContext.getTenantId() != null ? " AND tenant_id = ?" : "";
+    }
+
+    /** 追加当前租户参数；租户为空时不追加. */
+    private void addTenant(List<Object> params) {
+        Long tenantId = TenantContext.getTenantId();
+        if (tenantId != null) {
+            params.add(tenantId);
+        }
+    }
+
     /** Find all typed by category. 根据分类获取当前租户所有未删除的实体（类型化）.
      * @param category 知识沉淀分类名称|discoveredEntity
      * @return 类型化实体列表，按id倒序
@@ -91,9 +104,11 @@ public class WorkspaceRepository {
     public <T> List<T> findAllTyped(String category) {
         String table = getTableName(category);
         Class<T> entityClass = (Class<T>) getEntityClass(category);
+        List<Object> params = new ArrayList<>();
+        addTenant(params);
         return jdbcTemplate.query(
-                "SELECT * FROM " + table + " WHERE del_flag = 0 AND tenant_id = ? ORDER BY id DESC",
-                new BeanPropertyRowMapper<>(entityClass), TenantContext.getTenantId());
+                "SELECT * FROM " + table + " WHERE del_flag = 0" + tenantClause() + " ORDER BY id DESC",
+                new BeanPropertyRowMapper<>(entityClass), params.toArray());
     }
 
     /** Find all by category. 根据分类获取当前租户所有未删除的实体.
@@ -102,9 +117,11 @@ public class WorkspaceRepository {
      */
     public List<Map<String, Object>> findAll(String category) {
         String table = getTableName(category);
+        List<Object> params = new ArrayList<>();
+        addTenant(params);
         return jdbcTemplate.queryForList(
-                "SELECT * FROM " + table + " WHERE del_flag = 0 AND tenant_id = ? ORDER BY id DESC",
-                TenantContext.getTenantId());
+                "SELECT * FROM " + table + " WHERE del_flag = 0" + tenantClause() + " ORDER BY id DESC",
+                params.toArray());
     }
 
     /** Find page by category. 根据分类分页获取当前租户实体列表.
@@ -116,15 +133,20 @@ public class WorkspaceRepository {
     public PageResult<Map<String, Object>> findPage(String category, int pageNum, int pageSize) {
         String table = getTableName(category);
         int offset = (pageNum - 1) * pageSize;
+        List<Object> tenantParams = new ArrayList<>();
+        addTenant(tenantParams);
         Long total = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM " + table + " WHERE del_flag = 0 AND tenant_id = ?",
-                Long.class, TenantContext.getTenantId());
+                "SELECT COUNT(*) FROM " + table + " WHERE del_flag = 0" + tenantClause(),
+                Long.class, tenantParams.toArray());
         if (total == null || total == 0) {
             return PageResult.empty(pageNum, pageSize);
         }
+        List<Object> pageParams = new ArrayList<>(tenantParams);
+        pageParams.add(pageSize);
+        pageParams.add(offset);
         List<Map<String, Object>> records = jdbcTemplate.queryForList(
-                "SELECT * FROM " + table + " WHERE del_flag = 0 AND tenant_id = ? ORDER BY id DESC LIMIT ? OFFSET ?",
-                TenantContext.getTenantId(), pageSize, offset);
+                "SELECT * FROM " + table + " WHERE del_flag = 0" + tenantClause() + " ORDER BY id DESC LIMIT ? OFFSET ?",
+                pageParams.toArray());
         return new PageResult<>(records, total, pageNum, pageSize);
     }
 
@@ -135,9 +157,12 @@ public class WorkspaceRepository {
      */
     public Optional<Map<String, Object>> findById(String category, Long id) {
         String table = getTableName(category);
+        List<Object> params = new ArrayList<>();
+        params.add(id);
+        addTenant(params);
         List<Map<String, Object>> list = jdbcTemplate.queryForList(
-                "SELECT * FROM " + table + " WHERE id = ? AND del_flag = 0 AND tenant_id = ?",
-                id, TenantContext.getTenantId());
+                "SELECT * FROM " + table + " WHERE id = ? AND del_flag = 0" + tenantClause(),
+                params.toArray());
         return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 
@@ -152,7 +177,8 @@ public class WorkspaceRepository {
                 .withTableName(table)
                 .usingGeneratedKeyColumns("id");
         Map<String, Object> mutableData = new HashMap<>(data);
-        mutableData.put("tenant_id", TenantContext.getTenantId());
+        Long tenantId = TenantContext.getTenantId();
+        mutableData.put("tenant_id", tenantId != null ? tenantId : 0L);
         mutableData.put("del_flag", 0);
         mutableData.put("created_at", java.sql.Timestamp.from(java.time.Instant.now()));
         mutableData.put("updated_at", java.sql.Timestamp.from(java.time.Instant.now()));
@@ -181,8 +207,8 @@ public class WorkspaceRepository {
         }
         setClause.append(", updated_at = NOW()");
         params.add(id);
-        params.add(TenantContext.getTenantId());
-        String sql = "UPDATE " + table + " SET " + setClause + " WHERE id = ? AND del_flag = 0 AND tenant_id = ?";
+        addTenant(params);
+        String sql = "UPDATE " + table + " SET " + setClause + " WHERE id = ? AND del_flag = 0" + tenantClause();
         return jdbcTemplate.update(sql, params.toArray());
     }
 
@@ -193,9 +219,12 @@ public class WorkspaceRepository {
      */
     public int softDelete(String category, Long id) {
         String table = getTableName(category);
+        List<Object> params = new ArrayList<>();
+        params.add(id);
+        addTenant(params);
         return jdbcTemplate.update(
-                "UPDATE " + table + " SET del_flag = 1, updated_at = NOW() WHERE id = ? AND del_flag = 0 AND tenant_id = ?",
-                id, TenantContext.getTenantId());
+                "UPDATE " + table + " SET del_flag = 1, updated_at = NOW() WHERE id = ? AND del_flag = 0" + tenantClause(),
+                params.toArray());
     }
 
     /** Count by category. 统计当前租户未删除实体数量.
@@ -204,9 +233,11 @@ public class WorkspaceRepository {
      */
     public long count(String category) {
         String table = getTableName(category);
+        List<Object> params = new ArrayList<>();
+        addTenant(params);
         Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM " + table + " WHERE del_flag = 0 AND tenant_id = ?",
-                Long.class, TenantContext.getTenantId());
+                "SELECT COUNT(*) FROM " + table + " WHERE del_flag = 0" + tenantClause(),
+                Long.class, params.toArray());
         return count != null ? count : 0;
     }
 
@@ -227,11 +258,11 @@ public class WorkspaceRepository {
             }
             String orClause = columns.stream().map(c -> c + " LIKE ?").collect(Collectors.joining(" OR "));
             List<Object> params = new ArrayList<>();
-            params.add(TenantContext.getTenantId());
+            addTenant(params);
             for (int i = 0; i < columns.size(); i++) params.add(like);
             params.add(limit);
             return jdbcTemplate.queryForList(
-                    "SELECT * FROM " + table + " WHERE del_flag = 0 AND tenant_id = ? AND (" + orClause + ") LIMIT ?",
+                    "SELECT * FROM " + table + " WHERE del_flag = 0" + tenantClause() + " AND (" + orClause + ") LIMIT ?",
                     params.toArray());
         }
         List<Map<String, Object>> results = new ArrayList<>();
@@ -243,12 +274,12 @@ public class WorkspaceRepository {
             }
             String orClause = columns.stream().map(c -> c + " LIKE ?").collect(Collectors.joining(" OR "));
             List<Object> params = new ArrayList<>();
-            params.add(TenantContext.getTenantId());
+            addTenant(params);
             for (int i = 0; i < columns.size(); i++) params.add(like);
             params.add(limit);
             try {
                 List<Map<String, Object>> partial = jdbcTemplate.queryForList(
-                        "SELECT *, '" + cat + "' AS _category FROM " + table + " WHERE del_flag = 0 AND tenant_id = ? AND (" + orClause + ") LIMIT ?",
+                        "SELECT *, '" + cat + "' AS _category FROM " + table + " WHERE del_flag = 0" + tenantClause() + " AND (" + orClause + ") LIMIT ?",
                         params.toArray());
                 results.addAll(partial);
             } catch (Exception ignored) {
@@ -266,9 +297,9 @@ public class WorkspaceRepository {
      */
     public List<Map<String, Object>> queryByCategoryAndFilters(String category, Map<String, Object> filters, int pageNum, int pageSize) {
         String table = getTableName(category);
-        StringBuilder where = new StringBuilder("WHERE del_flag = 0 AND tenant_id = ?");
+        StringBuilder where = new StringBuilder("WHERE del_flag = 0" + tenantClause());
         List<Object> params = new ArrayList<>();
-        params.add(TenantContext.getTenantId());
+        addTenant(params);
         for (Map.Entry<String, Object> entry : filters.entrySet()) {
             where.append(" AND ").append(entry.getKey()).append(" = ?");
             params.add(entry.getValue());

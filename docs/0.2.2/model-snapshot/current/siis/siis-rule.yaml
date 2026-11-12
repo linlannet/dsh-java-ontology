@@ -1,0 +1,87 @@
+# SIIS 规则模型元文件（项目层）- siis-rule.yaml
+# SIIS 业务特定规则：URL校验 + 采集限流 + 文章去重 + NLP模型部署 + 告警条件匹配
+model_type: RULE
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+rules:
+  - id: RULE-I18N-LANG-NOT-ZH
+    name: 翻译语种非中文
+    ruleType: VALIDATION
+    description: 多语种翻译表不存中文（中文存主表 entityName）
+    inputParams:
+      - { name: lang, type: String, sourceField: OntologyI18n.lang, required: true }
+    outputType: Boolean
+    expression: |
+      lang != 'zh'
+    reusedBy: [Ontology_I18n_Save]
+    version: "1.0"
+
+  - id: RULE-URL-VALID
+    name: URL格式合法
+    ruleType: VALIDATION
+    description: 采集源URL格式必须合法
+    inputParams:
+      - { name: url, type: String, sourceField: TrackCrawlSource.url, required: true }
+    outputType: Boolean
+    expression: |
+      url != null AND (url STARTS_WITH 'http://' OR url STARTS_WITH 'https://')
+    reusedBy: [CrawlSource_Create]
+    version: "1.0"
+
+  - id: RULE-CRAWL-RATE-LIMIT
+    name: 采集限流
+    ruleType: VALIDATION
+    description: 同一采集源在间隔时间内不重复执行
+    inputParams:
+      - { name: lastCrawlTime, type: DateTime, sourceField: TrackCrawlSource.lastCrawlTime, required: true }
+      - { name: intervalMinutes, type: Integer, sourceField: TrackCrawlSource.intervalMinutes, required: true }
+      - { name: currentTime, type: DateTime, sourceField: System.currentTime, required: true }
+    outputType: Boolean
+    expression: |
+      currentTime >= lastCrawlTime + intervalMinutes * 60000
+    reusedBy: [CrawlTask_Execute]
+    version: "1.0"
+
+  - id: RULE-ARTICLE-DEDUP
+    name: 文章去重
+    ruleType: VALIDATION
+    description: 同租户内文章哈希不重复
+    inputParams:
+      - { name: articleHash, type: String, sourceField: TrackArticle.articleHash, required: true }
+      - { name: tenantId, type: Long, sourceField: TrackArticle.tenantId, required: true }
+    outputType: Boolean
+    expression: |
+      NOT EXISTS(TrackArticle WHERE articleHash == this.articleHash AND tenantId == this.tenantId AND del_flag == 0)
+    reusedBy: [Article_Save]
+    version: "1.0"
+
+  - id: RULE-NLP-MODEL-DEPLOYED
+    name: NLP模型已部署
+    ruleType: VALIDATION
+    description: 处理文章前检查NLP模型已部署
+    inputParams:
+      - { name: deployed, type: Integer, sourceField: AnalyzeNlpVersion.deployed, required: true }
+    outputType: Boolean
+    expression: |
+      deployed == 1
+    reusedBy: [Nlp_Process]
+    version: "1.0"
+
+  - id: RULE-ALERT-CONDITION-MATCH
+    name: 告警条件匹配
+    ruleType: VALIDATION
+    description: 文章内容匹配告警规则条件（关键词/情感/事件）
+    inputParams:
+      - { name: ruleType, type: String, sourceField: AnalyzeAlertRule.ruleType, required: true }
+      - { name: conditionConfig, type: String, sourceField: AnalyzeAlertRule.conditionConfig, required: true }
+      - { name: articleContent, type: String, sourceField: TrackArticle.content, required: true }
+    outputType: Boolean
+    expression: |
+      IF ruleType == 'keyword' THEN evaluateKeywordMatch(conditionConfig, articleContent)
+      ELSE IF ruleType == 'sentiment' THEN evaluateSentimentMatch(conditionConfig, articleContent)
+      ELSE IF ruleType == 'event' THEN evaluateEventMatch(conditionConfig, articleContent)
+      ELSE false
+    reusedBy: [Alert_Check]
+    version: "1.0"

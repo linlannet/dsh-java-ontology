@@ -26,14 +26,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final String header;
     private final String prefix;
+    private final boolean defaultDirectorEnabled;
 
     public JwtAuthenticationFilter(
             JwtUtil jwtUtil,
             @Value("${dsh.ontology.jwt.header:Authorization}") String header,
-            @Value("${dsh.ontology.jwt.prefix:Bearer }") String prefix) {
+            @Value("${dsh.ontology.jwt.prefix:Bearer }") String prefix,
+            @Value("${dsh.ontology.auth.default-director-enabled:false}") boolean defaultDirectorEnabled) {
         this.jwtUtil = jwtUtil;
         this.header = header;
         this.prefix = prefix;
+        this.defaultDirectorEnabled = defaultDirectorEnabled;
     }
 
     @Override
@@ -41,11 +44,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String token = extractToken(request);
+            boolean authenticated = false;
             if (token != null && jwtUtil.validateToken(token)) {
                 Claims claims = jwtUtil.parseToken(token);
                 TenantContext.setUserId(jwtUtil.getUserId(claims));
                 TenantContext.setRoleLevel(jwtUtil.getRoleLevel(claims));
                 TenantContext.setTenantId(jwtUtil.getTenantId(claims));
+                authenticated = true;
+            }
+            if (!authenticated && defaultDirectorEnabled) {
+                // 桌面端暂无登录界面：未携带有效令牌时默认以主任身份（跨租户）放行，仅用于本地/内网演示
+                TenantContext.setUserId(1L);
+                TenantContext.setRoleLevel(0);
+                TenantContext.setTenantId(null);
             }
             filterChain.doFilter(request, response);
         } finally {

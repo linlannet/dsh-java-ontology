@@ -30,7 +30,7 @@ class AppMetaServiceTest extends BaseTest {
     void testAppInfo() {
         AppInfo info = metaService.appInfo();
         assertEquals("dsh-onto-app", info.name());
-        assertEquals("0.2.1", info.version());
+        assertEquals("0.2.2", info.version());
         assertNotNull(info.description());
         assertTrue(info.modules().containsAll(
                 List.of("app", "base", "flow", "qa", "viz", "metric")));

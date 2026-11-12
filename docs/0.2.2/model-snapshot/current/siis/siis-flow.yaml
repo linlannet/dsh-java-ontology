@@ -1,0 +1,105 @@
+# SIIS 流程模型元文件（项目层）- siis-flow.yaml
+# SIIS 业务特定流程：七阶段协同流 + 采集→NLP子流程 + 告警→推送子流程
+model_type: FLOW
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+flows:
+  - id: FLOW-WORKLINE-001
+    name: 信息监测工作主线
+    flowType: COLLABORATION
+    description: 从采集到推送的端到端七阶段协同流
+    businessObjectRefs: [AGG-TRK-ARTICLE-001, AGG-ANZ-NLP-ENTITY-001, AGG-TRK-KG-NODE-001, AGG-DSP-ALERT-RECORD-001, AGG-DSP-RPT-REPORT-001]
+    roleRefs: [ROLE-RESEARCHER, ROLE-SUPER-ADMIN]
+    trigger:
+      triggerType: SCHEDULED
+    startActivity: s_start
+    endActivities: [s_end]
+    nodeGraph:
+      nodes:
+        - { id: s_start, type: start, name: 开始 }
+        - { id: s1_crawl, type: system_task, name: 1_采集, behavior_ref: CrawlTask_Execute }
+        - { id: s2_nlp, type: system_task, name: 2_NLP处理, behavior_ref: Nlp_Process }
+        - { id: s3_kg, type: user_task, name: 3_图谱构建, role_ref: ROLE-RESEARCHER, behavior_ref: Kg_Build }
+        - { id: s4_analyze, type: system_task, name: 4_分析, behavior_ref: Alert_Check }
+        - { id: s5_alert, type: system_task, name: 5_告警, behavior_ref: Alert_Record_Create }
+        - { id: s6_report, type: user_task, name: 6_报告生成, role_ref: ROLE-RESEARCHER, behavior_ref: Report_Generate }
+        - { id: s7_push, type: system_task, name: 7_推送, behavior_ref: Push_Send }
+        - { id: s_end, type: end, name: 结束, result: COMPLETED }
+      edges:
+        - { source: s_start, target: s1_crawl }
+        - { source: s1_crawl, target: s2_nlp }
+        - { source: s2_nlp, target: s3_kg }
+        - { source: s3_kg, target: s4_analyze }
+        - { source: s4_analyze, target: s5_alert }
+        - { source: s5_alert, target: s6_report }
+        - { source: s6_report, target: s7_push }
+        - { source: s7_push, target: s_end }
+
+  # ══════════════════════════════════════════════════════════
+  # 采集→NLP 子流程（SYSTEM，自动执行）
+  # ══════════════════════════════════════════════════════════
+  - id: FLOW-CRAWL-NLP-002
+    name: 采集与NLP子流程
+    flowType: COLLABORATION
+    description: 采集任务执行后自动触发NLP处理
+    businessObjectRefs: [AGG-TRK-CRAWL-TASK-001, AGG-TRK-ARTICLE-001, AGG-ANZ-NLP-ENTITY-001]
+    roleRefs: [ROLE-SYSTEM]
+    trigger:
+      triggerType: BEHAVIOR
+      behaviorRef: CrawlTask_Execute
+    startActivity: cn_start
+    endActivities: [cn_end]
+    nodeGraph:
+      nodes:
+        - { id: cn_start, type: start, name: 开始 }
+        - { id: cn_crawl, type: system_task, name: 执行采集, behavior_ref: CrawlTask_Execute }
+        - { id: cn_save, type: system_task, name: 保存文章, behavior_ref: Article_Save }
+        - { id: cn_nlp, type: system_task, name: NLP处理, behavior_ref: Nlp_Process }
+        - { id: cn_end, type: end, name: 结束, result: COMPLETED }
+      edges:
+        - { source: cn_start, target: cn_crawl }
+        - { source: cn_crawl, target: cn_save }
+        - { source: cn_save, target: cn_nlp }
+        - { source: cn_nlp, target: cn_end }
+
+  # ══════════════════════════════════════════════════════════
+  # 告警→推送 子流程（SYSTEM，自动执行）
+  # ══════════════════════════════════════════════════════════
+  - id: FLOW-ALERT-PUSH-003
+    name: 告警与推送子流程
+    flowType: COLLABORATION
+    description: NLP完成后检查告警规则，匹配则创建告警并推送
+    businessObjectRefs: [AGG-ANZ-ALERT-RULE-001, AGG-DSP-ALERT-RECORD-001, AGG-DSP-PUSH-RECORD-001]
+    roleRefs: [ROLE-SYSTEM]
+    trigger:
+      triggerType: BEHAVIOR
+      behaviorRef: Nlp_Process
+    startActivity: ap_start
+    endActivities: [ap_end_alert, ap_end_no_alert]
+    nodeGraph:
+      nodes:
+        - { id: ap_start, type: start, name: 开始 }
+        - { id: ap_check, type: system_task, name: 检查告警规则, behavior_ref: Alert_Check }
+        - id: ap_gateway
+          type: gateway
+          name: 是否触发告警
+          branches:
+            - { name: 规则匹配, rule_ref: RULE-ALERT-CONDITION-MATCH, target: ap_create }
+            - { name: 无匹配, target: ap_end_no_alert, is_default: true }
+        - { id: ap_create, type: system_task, name: 创建告警记录, behavior_ref: Alert_Record_Create }
+        - { id: ap_push, type: system_task, name: 发送推送, behavior_ref: Push_Send }
+        - { id: ap_end_alert, type: end, name: 告警已推送, result: ALERTED }
+        - { id: ap_end_no_alert, type: end, name: 无告警, result: SKIPPED }
+      edges:
+        - { source: ap_start, target: ap_check }
+        - { source: ap_check, target: ap_gateway }
+        - { source: ap_gateway, target: ap_create }
+        - { source: ap_gateway, target: ap_end_no_alert }
+        - { source: ap_create, target: ap_push }
+        - { source: ap_push, target: ap_end_alert }
+
+  # ══════════════════════════════════════════════════════════
+  # 全局汇聚流程（APPROVAL，主任触发）
+  # ══════════════════════════════════════════════════════════

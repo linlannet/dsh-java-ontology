@@ -23,7 +23,7 @@ spring:
 dsh:
   app:
     name: dsh-onto-app
-    version: 0.2.1
+    version: 0.2.2
     description: 聚合应用测试上下文
   ontology:
     data-directory: ${java.io.tmpdir}/dsh-java-ontology-test
@@ -36,3 +36,5 @@ dsh:
       expiration-ms: 3600000
       header: Authorization
       prefix: "Bearer "
+    auth:
+      default-director-enabled: false

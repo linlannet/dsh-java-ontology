@@ -1,0 +1,38 @@
+# SIIS 规则模型元文件（项目层）- siis-rule.yaml
+# SIIS 业务特定规则：URL校验 + 采集限流 + 文章去重 + NLP模型部署 + 告警条件匹配
+model_type: RULE
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+rules:
+  - id: RULE-I18N-LANG-NOT-ZH
+    name: 翻译语种非中文
+    ruleType: VALIDATION
+    description: 多语种翻译表不存中文（中文存主表 entityName）
+    inputParams:
+  - id: RULE-URL-VALID
+    name: URL格式合法
+    ruleType: VALIDATION
+    description: 采集源URL格式必须合法
+    inputParams:
+  - id: RULE-CRAWL-RATE-LIMIT
+    name: 采集限流
+    ruleType: VALIDATION
+    description: 同一采集源在间隔时间内不重复执行
+    inputParams:
+  - id: RULE-ARTICLE-DEDUP
+    name: 文章去重
+    ruleType: VALIDATION
+    description: 同租户内文章哈希不重复
+    inputParams:
+  - id: RULE-NLP-MODEL-DEPLOYED
+    name: NLP模型已部署
+    ruleType: VALIDATION
+    description: 处理文章前检查NLP模型已部署
+    inputParams:
+  - id: RULE-ALERT-CONDITION-MATCH
+    name: 告警条件匹配
+    ruleType: VALIDATION
+    description: 文章内容匹配告警规则条件（关键词/情感/事件）
+    inputParams:

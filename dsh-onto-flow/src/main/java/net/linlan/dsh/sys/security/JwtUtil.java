@@ -74,30 +74,43 @@ public class JwtUtil {
 
     /**
      * 从令牌中提取用户名
+     * 过渡双读：优先 snake_case（linlan-emis 标准契约），缺失时回退旧 camelCase
      */
     public String getUserName(Claims claims) {
-        return claims.get("userName", String.class);
+        String userName = claims.get("user_name", String.class);
+        return userName != null ? userName : claims.get("userName", String.class);
     }
 
     /**
      * 从令牌中提取角色层级
+     * 过渡双读：优先 role_level，缺失时回退 roleLevel
      */
     public Integer getRoleLevel(Claims claims) {
-        return claims.get("roleLevel", Integer.class);
+        return toInteger(claims.get("role_level"), claims.get("roleLevel"));
     }
 
     /**
      * 从令牌中提取租户ID
+     * 过渡双读：优先 tenant_id，缺失时回退 tenantId
      */
     public Long getTenantId(Claims claims) {
-        Object tid = claims.get("tenantId");
-        if (tid == null) {
+        return toLong(claims.get("tenant_id"), claims.get("tenantId"));
+    }
+
+    private static Integer toInteger(Object primary, Object fallback) {
+        Object value = primary != null ? primary : fallback;
+        if (value == null) {
             return null;
         }
-        if (tid instanceof Number) {
-            return ((Number) tid).longValue();
+        return value instanceof Number number ? number.intValue() : Integer.valueOf(value.toString());
+    }
+
+    private static Long toLong(Object primary, Object fallback) {
+        Object value = primary != null ? primary : fallback;
+        if (value == null) {
+            return null;
         }
-        return Long.valueOf(tid.toString());
+        return value instanceof Number number ? number.longValue() : Long.valueOf(value.toString());
     }
 
     /**

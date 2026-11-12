@@ -1,0 +1,57 @@
+# M6 流程模型元文件（产品层 base）- m6-flow-model.yaml
+# 通用流程：全局汇聚 + 实体晋升审批
+model_type: FLOW
+version: "3.0"
+domain: "通用本体知识库平台"
+
+flows:
+  - id: FLOW-GLOBAL-AGG-004
+    name: 全局汇聚流程
+    flowType: COLLABORATION
+    description: 主任触发全局汇聚，合并多租户发现实体/关系/图谱
+    businessObjectRefs: [AGG-GLB-DISCOVERED-ENTITY-001, AGG-GLB-BILATERAL-001, AGG-GLB-KG-NODE-001, AGG-GLB-AGG-LOG-001]
+    roleRefs: [ROLE-SUPER-ADMIN]
+    trigger:
+      triggerType: MANUAL
+    startActivity: ga_start
+    endActivities: [ga_end]
+    nodeGraph:
+      nodes:
+        - { id: ga_start, type: start, name: 开始 }
+        - { id: ga_entity, type: system_task, name: 汇聚发现实体, behavior_ref: Global_Aggregate_Entity }
+        - { id: ga_relation, type: system_task, name: 汇聚双边关系, behavior_ref: Global_Aggregate_Relation }
+        - { id: ga_kg, type: system_task, name: 汇聚知识图谱, behavior_ref: Global_Aggregate_KG }
+        - { id: ga_end, type: end, name: 汇聚完成, result: COMPLETED }
+      edges:
+        - { source: ga_start, target: ga_entity }
+        - { source: ga_entity, target: ga_relation }
+        - { source: ga_relation, target: ga_kg }
+        - { source: ga_kg, target: ga_end }
+
+  # ══════════════════════════════════════════════════════════
+  # 实体晋升流程（APPROVAL，主任审批）
+  # ══════════════════════════════════════════════════════════
+  - id: FLOW-PROMOTE-005
+    name: 发现实体晋升流程
+    flowType: APPROVAL
+    description: 研究员发现实体后，主任审批晋升到本体库
+    businessObjectRefs: [AGG-CMN-DISCOVERED-ENTITY-001, AGG-ONT-ENTITY-001]
+    roleRefs: [ROLE-RESEARCHER, ROLE-SUPER-ADMIN]
+    trigger:
+      triggerType: MANUAL
+    startActivity: p_start
+    endActivities: [p_end_ok, p_end_reject]
+    nodeGraph:
+      nodes:
+        - { id: p_start, type: start, name: 开始 }
+        - { id: p_submit, type: user_task, name: 提交晋升申请, role_ref: ROLE-RESEARCHER, behavior_ref: DiscoveredEntity_Record }
+        - { id: p_approve, type: approval_task, name: 主任审批, role_ref: ROLE-SUPER-ADMIN, outcomes: [APPROVE, REJECT] }
+        - { id: p_promote, type: system_task, name: 晋升到本体, behavior_ref: Ontology_Promote }
+        - { id: p_end_ok, type: end, name: 晋升成功, result: APPROVED }
+        - { id: p_end_reject, type: end, name: 驳回, result: REJECTED }
+      edges:
+        - { source: p_start, target: p_submit }
+        - { source: p_submit, target: p_approve }
+        - { source: p_approve, target: p_promote, approval_outcome: APPROVE }
+        - { source: p_approve, target: p_end_reject, approval_outcome: REJECT }
+        - { source: p_promote, target: p_end_ok }

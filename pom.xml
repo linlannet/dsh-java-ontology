@@ -46,8 +46,6 @@
         <module>dsh-onto-metric</module>
         <module>dsh-onto-app</module>
         <module>dsh-onto-plugin</module>
-        <module>dsh-ontolab-siis/dsh-ontolab-siis-app</module>
-        <module>dsh-ontolab-siis/dsh-ontolab-siis-plugin</module>
     </modules>
 
     <properties>

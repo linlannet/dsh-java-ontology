@@ -1,8 +1,12 @@
 package net.linlan.dsh.workspace.service;
 
 import net.linlan.dsh.common.PageResult;
+import net.linlan.dsh.common.exception.SchemaValidationException;
 import net.linlan.dsh.common.service.CrudService;
+import net.linlan.dsh.ontology.engine.validation.FieldViolation;
+import net.linlan.dsh.ontology.engine.validation.SchemaValidator;
 import net.linlan.dsh.workspace.repository.WorkspaceRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +25,10 @@ import java.util.Optional;
 public class WorkspaceCrudService implements CrudService {
 
     private final WorkspaceRepository repository;
+
+    /** 引擎未装配时跳过校验，保持既有调用方式；仅对注册表命中的本体类型生效。 */
+    @Autowired(required = false)
+    private SchemaValidator schemaValidator;
 
     public WorkspaceCrudService(WorkspaceRepository repository) {
         this.repository = repository;
@@ -68,6 +76,7 @@ public class WorkspaceCrudService implements CrudService {
      */
     @Transactional
     public Long create(String category, Map<String, Object> data) {
+        validate(category, data, false);
         return repository.insert(category, data);
     }
 
@@ -79,6 +88,7 @@ public class WorkspaceCrudService implements CrudService {
      */
     @Transactional
     public int update(String category, Long id, Map<String, Object> data) {
+        validate(category, data, true);
         return repository.update(category, id, data);
     }
 
@@ -126,5 +136,15 @@ public class WorkspaceCrudService implements CrudService {
      */
     public List<String> getCategories() {
         return List.copyOf(WorkspaceRepository.TABLE_TO_ENTITY.keySet());
+    }
+
+    private void validate(String category, Map<String, Object> data, boolean partial) {
+        if (schemaValidator == null || !schemaValidator.supports(category)) {
+            return;
+        }
+        List<FieldViolation> violations = schemaValidator.validate(category, data, partial);
+        if (!violations.isEmpty()) {
+            throw new SchemaValidationException(category, violations);
+        }
     }
 }

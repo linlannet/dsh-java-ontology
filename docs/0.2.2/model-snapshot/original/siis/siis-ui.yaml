@@ -1,0 +1,25 @@
+# SIIS UI 模型元文件（项目层）- siis-ui.yaml
+# SIIS 业务特定 UI 配置：14模块导航 + 4步流程画布 + AI助手技能
+model_type: UI
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+# SIIS 项目层 UI 扩展配置
+navigation:
+  modules:
+    - { id: nav-ontology, name: 本体库, icon: database, route: /ontology }
+    - { id: nav-track, name: 信息监测, icon: radar, route: /track }
+    - { id: nav-analyze, name: 信息分析, icon: chart, route: /analyze }
+    - { id: nav-display, name: 展示交互, icon: presentation, route: /display }
+    - { id: nav-workspace, name: 工作台, icon: folder, route: /workspace }
+    - { id: nav-report, name: 报告问数, icon: file-text, route: /report }
+    - { id: nav-ingestion, name: 数据摄取, icon: upload, route: /ingestion }
+    - { id: nav-global, name: 全局汇聚, icon: globe, route: /global }
+
+workflow_canvas:
+  steps:
+    - { id: step-1, name: 数据接入, route: /ingestion }
+    - { id: step-2, name: 数据处理, route: /track }
+    - { id: step-3, name: 本体建模, route: /analyze }
+    - { id: step-4, name: 本体库, route: /ontology }

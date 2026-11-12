@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -93,12 +95,9 @@ public class AggregationService {
                 "t.hotspot_region, t.status AS topic_status, t.alert_enabled, " +
                 "COUNT(DISTINCT a.id) AS article_count, " +
                 "COUNT(DISTINCT CASE WHEN a.published >= ? THEN a.id END) AS recent_article_count, " +
-                "COUNT(DISTINCT ar.id) AS alert_count, " +
                 "MAX(a.published) AS latest_article_time " +
-                "FROM gwy_analyze_track_topic t " +
-                "LEFT JOIN gwy_track_article a ON a.topic_id = t.id AND a.tenant_id = t.tenant_id AND a.del_flag = 0 " +
-                "LEFT JOIN gwy_display_alert_record ar ON ar.rule_id IN " +
-                "(SELECT id FROM gwy_analyze_alert_rule WHERE FIND_IN_SET(id, t.alert_rule_ids) > 0) " +
+                "FROM onto_analyze_track_topic t " +
+                "LEFT JOIN onto_track_article a ON a.topic_id = t.id AND a.tenant_id = t.tenant_id AND a.del_flag = 0 " +
                 "WHERE t.del_flag = 0");
 
         List<Object> params = new ArrayList<>();
@@ -115,7 +114,49 @@ public class AggregationService {
         params.add(pageSize);
         params.add(offset);
 
-        return jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql.toString(), params.toArray());
+        fillAlertCounts(rows);
+        return rows;
+    }
+
+    /**
+     * 按 topic_id 从平台层告警记录聚合 alert_count
+     * <p>D-R1：告警记录已由项目层 gwy_display_alert_record 收敛至平台层
+     * onto_report_alert_record，与 siis 库不再同库，故由 SQL 关联改为应用层聚合。</p>
+     */
+    private void fillAlertCounts(List<Map<String, Object>> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return;
+        }
+        List<Long> topicIds = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            Object topicId = row.get("topic_id");
+            if (topicId instanceof Number) {
+                topicIds.add(((Number) topicId).longValue());
+            }
+        }
+        Map<Long, Long> countMap = new HashMap<>();
+        if (!topicIds.isEmpty()) {
+            JdbcTemplate ontoJdbc = (ontoJdbcTemplate != null) ? ontoJdbcTemplate : jdbcTemplate;
+            String placeholders = String.join(",", Collections.nCopies(topicIds.size(), "?"));
+            List<Map<String, Object>> counts = ontoJdbc.queryForList(
+                    "SELECT topic_id, COUNT(*) AS alert_count FROM onto_report_alert_record " +
+                    "WHERE del_flag = 0 AND topic_id IN (" + placeholders + ") GROUP BY topic_id",
+                    topicIds.toArray());
+            for (Map<String, Object> count : counts) {
+                Object topicId = count.get("topic_id");
+                Object alertCount = count.get("alert_count");
+                if (topicId instanceof Number && alertCount instanceof Number) {
+                    countMap.put(((Number) topicId).longValue(), ((Number) alertCount).longValue());
+                }
+            }
+        }
+        for (Map<String, Object> row : rows) {
+            Object topicId = row.get("topic_id");
+            long alertCount = (topicId instanceof Number)
+                    ? countMap.getOrDefault(((Number) topicId).longValue(), 0L) : 0L;
+            row.put("alert_count", alertCount);
+        }
     }
 
     /**
@@ -127,14 +168,14 @@ public class AggregationService {
 
     /**
      * 查询统一知识图谱（应用层聚合，不依赖跨库视图）
-     * <p>个人层查 siisJdbcTemplate.gwy_track_kg_node，全局层查 ontoJdbcTemplate.onto_global_kg_node。</p>
+     * <p>个人层查 jdbcTemplate.onto_track_kg_node，全局层查 ontoJdbcTemplate.onto_global_kg_node。</p>
      */
     public List<Map<String, Object>> getUnifiedKg() {
         JdbcTemplate ontoJdbc = (ontoJdbcTemplate != null) ? ontoJdbcTemplate : jdbcTemplate;
         List<Map<String, Object>> result = new ArrayList<>();
         result.addAll(jdbcTemplate.queryForList(
                 "SELECT 'PERSONAL' AS source_layer, tenant_id, node_id, node_type, node_name, weight " +
-                "FROM gwy_track_kg_node WHERE del_flag = 0"));
+                "FROM onto_track_kg_node WHERE del_flag = 0"));
         result.addAll(ontoJdbc.queryForList(
                 "SELECT 'GLOBAL' AS source_layer, NULL AS tenant_id, CONCAT('G-', id) AS node_id, node_type, node_name, cross_tenant_weight AS weight " +
                 "FROM onto_global_kg_node WHERE del_flag = 0"));
@@ -195,9 +236,9 @@ public class AggregationService {
         overview.put("totalKgEdges", jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM onto_global_kg_edge WHERE del_flag = 0", Long.class));
         overview.put("totalTenants", jdbcTemplate.queryForObject(
-                "SELECT COUNT(DISTINCT tenant_id) FROM gwy_track_article WHERE del_flag = 0", Long.class));
+                "SELECT COUNT(DISTINCT tenant_id) FROM onto_track_article WHERE del_flag = 0", Long.class));
         overview.put("totalArticles", jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM gwy_track_article WHERE del_flag = 0", Long.class));
+                "SELECT COUNT(*) FROM onto_track_article WHERE del_flag = 0", Long.class));
         overview.put("lastAggregation", getLastAggregationLog());
         return overview;
     }

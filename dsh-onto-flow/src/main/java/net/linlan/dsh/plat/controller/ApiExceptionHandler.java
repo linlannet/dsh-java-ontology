@@ -1,6 +1,8 @@
 package net.linlan.dsh.plat.controller;
 
 import net.linlan.dsh.common.Result;
+import net.linlan.dsh.common.exception.SchemaValidationException;
+import net.linlan.dsh.ontology.engine.validation.FieldViolation;
 import net.linlan.dsh.plat.model.ApiException;
 import net.linlan.dsh.plat.model.ErrorResponse;
 import org.slf4j.Logger;
@@ -15,6 +17,9 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -68,6 +73,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Result<Void>> illegalArg(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(Result.badRequest(exception.getMessage()));
+    }
+
+    @ExceptionHandler(SchemaValidationException.class)
+    public ResponseEntity<Result<List<FieldViolation>>> schemaValidation(SchemaValidationException exception) {
+        String detail = exception.violations().stream()
+                .map(violation -> violation.field() + ":" + violation.rule())
+                .collect(Collectors.joining(","));
+        log.warn("本体写入校验失败: category={}, violations=[{}]", exception.category(), detail);
+        return ResponseEntity.badRequest()
+                .body(new Result<>(400, exception.getMessage(), exception.violations()));
     }
 
     @ExceptionHandler(Exception.class)

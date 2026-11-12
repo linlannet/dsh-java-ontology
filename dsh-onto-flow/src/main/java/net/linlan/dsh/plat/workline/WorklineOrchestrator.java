@@ -3,6 +3,8 @@ package net.linlan.dsh.plat.workline;
 import net.linlan.dsh.common.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -25,11 +27,21 @@ public class WorklineOrchestrator {
     private static final Logger log = LoggerFactory.getLogger(WorklineOrchestrator.class);
 
     private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate ontoJdbcTemplate;
     private final ConcurrentHashMap<String, WorklineContext> contextStore = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, List<WorklinePhaseResult>> resultStore = new ConcurrentHashMap<>();
 
-    public WorklineOrchestrator(JdbcTemplate jdbcTemplate) {
+    public WorklineOrchestrator(JdbcTemplate jdbcTemplate,
+                                @Qualifier("ontoJdbcTemplate") ObjectProvider<JdbcTemplate> ontoJdbcTemplateProvider) {
         this.jdbcTemplate = jdbcTemplate;
+        this.ontoJdbcTemplate = ontoJdbcTemplateProvider.getIfAvailable();
+    }
+
+    /**
+     * 平台层数据源：双库模式下指向 ontodb；单库模式下回退默认数据源。
+     */
+    private JdbcTemplate ontoJdbc() {
+        return ontoJdbcTemplate != null ? ontoJdbcTemplate : jdbcTemplate;
     }
 
     public WorklineContext init(String worklineId, Long tenantId, Long userId) {
@@ -99,7 +111,7 @@ public class WorklineOrchestrator {
         int topicCount = 0;
         if (topicId != null) {
             topicCount = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM gwy_analyze_track_topic WHERE id = ? AND del_flag = 0",
+                    "SELECT COUNT(*) FROM onto_analyze_track_topic WHERE id = ? AND del_flag = 0",
                     Integer.class, topicId);
         }
         Map<String, Object> output = Map.of("topicId", topicId != null ? topicId : 0, "topicValid", topicCount > 0);
@@ -112,7 +124,7 @@ public class WorklineOrchestrator {
         log.info("[Phase 2] Collection & Monitoring for workline: {}", context.getWorklineId());
         Long tenantId = context.getTenantId();
         Long articleCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM gwy_track_article WHERE tenant_id = ? AND del_flag = 0",
+                "SELECT COUNT(*) FROM onto_track_article WHERE tenant_id = ? AND del_flag = 0",
                 Long.class, tenantId);
         Map<String, Object> output = Map.of("articleCount", articleCount);
         LocalDateTime end = LocalDateTime.now();
@@ -124,7 +136,7 @@ public class WorklineOrchestrator {
         log.info("[Phase 3] NLP Analysis for workline: {}", context.getWorklineId());
         Long tenantId = context.getTenantId();
         Long pendingCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM gwy_track_article WHERE tenant_id = ? AND nlp_status = 'PENDING' AND del_flag = 0",
+                "SELECT COUNT(*) FROM onto_track_article WHERE tenant_id = ? AND nlp_status = 'PENDING' AND del_flag = 0",
                 Long.class, tenantId);
         Map<String, Object> output = Map.of("pendingArticles", pendingCount);
         LocalDateTime end = LocalDateTime.now();
@@ -136,10 +148,10 @@ public class WorklineOrchestrator {
         log.info("[Phase 4] Knowledge Graph Construction for workline: {}", context.getWorklineId());
         Long tenantId = context.getTenantId();
         Long nodeCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM gwy_track_kg_node WHERE tenant_id = ? AND del_flag = 0",
+                "SELECT COUNT(*) FROM onto_track_kg_node WHERE tenant_id = ? AND del_flag = 0",
                 Long.class, tenantId);
         Long edgeCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM gwy_track_kg_edge WHERE tenant_id = ? AND del_flag = 0",
+                "SELECT COUNT(*) FROM onto_track_kg_edge WHERE tenant_id = ? AND del_flag = 0",
                 Long.class, tenantId);
         Map<String, Object> output = Map.of("kgNodes", nodeCount, "kgEdges", edgeCount);
         LocalDateTime end = LocalDateTime.now();
@@ -149,8 +161,8 @@ public class WorklineOrchestrator {
     protected WorklinePhaseResult phase5HotspotAnalysis(WorklineContext context) {
         LocalDateTime start = LocalDateTime.now();
         log.info("[Phase 5] Hotspot Analysis for workline: {}", context.getWorklineId());
-        Long hotspotCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM gwy_ontology_hotspot WHERE del_flag = 0",
+        Long hotspotCount = ontoJdbc().queryForObject(
+                "SELECT COUNT(*) FROM onto_ontology_entity WHERE category = 'hotspot' AND del_flag = 0",
                 Long.class);
         Map<String, Object> output = Map.of("hotspotCount", hotspotCount);
         LocalDateTime end = LocalDateTime.now();
@@ -161,7 +173,7 @@ public class WorklineOrchestrator {
         LocalDateTime start = LocalDateTime.now();
         log.info("[Phase 6] Report Generation for workline: {}", context.getWorklineId());
         Long tenantId = context.getTenantId();
-        Long reportCount = jdbcTemplate.queryForObject(
+        Long reportCount = ontoJdbc().queryForObject(
                 "SELECT COUNT(*) FROM onto_report_instance WHERE tenant_id = ? AND del_flag = 0",
                 Long.class, tenantId);
         Map<String, Object> output = Map.of("reportCount", reportCount);
@@ -173,8 +185,8 @@ public class WorklineOrchestrator {
         LocalDateTime start = LocalDateTime.now();
         log.info("[Phase 7] Push & Display for workline: {}", context.getWorklineId());
         Long tenantId = context.getTenantId();
-        Long pushCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM gwy_display_push_record WHERE tenant_id = ? AND del_flag = 0",
+        Long pushCount = ontoJdbc().queryForObject(
+                "SELECT COUNT(*) FROM onto_report_push_record WHERE tenant_id = ? AND del_flag = 0",
                 Long.class, tenantId);
         context.setStatus("COMPLETED");
         context.setEndTime(LocalDateTime.now());

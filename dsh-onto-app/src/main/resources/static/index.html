@@ -3,40 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSH Ontology Admin</title>
+    <title>DSH 本体管理台</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <header>
-        <h1>DSH Ontology Admin</h1>
-        <span class="badge">本体库管理后台</span>
-    </header>
-    <main>
-        <section id="ontology-list">
-            <h2>本体库列表</h2>
-            <button id="btn-refresh" onclick="loadOntologies()">刷新</button>
-            <button id="btn-new" onclick="showNewForm()">新建本体</button>
-            <div id="new-form" style="display:none">
-                <input id="new-name" placeholder="名称">
-                <input id="new-desc" placeholder="描述">
-                <input id="new-source" placeholder="来源 (可选)">
-                <button onclick="createOntology()">保存</button>
-            </div>
-            <table id="ontology-table">
-                <thead><tr><th>ID</th><th>名称</th><th>描述</th><th>来源</th><th>操作</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </section>
-        <section id="ai-chat">
-            <h2>AI 对话</h2>
-            <input id="agent-id" placeholder="Agent ID">
-            <input id="ontology-id" placeholder="本体库 ID (可选)">
-            <textarea id="ai-message" placeholder="输入问题..."></textarea>
-            <button onclick="aiChat()">发送</button>
-            <button onclick="aiStream()">流式发送</button>
-            <div id="ai-output"></div>
-        </section>
-    </main>
-    <script src="/app.js"></script>
+<aside class="sidebar" id="sidebar" hidden>
+    <div class="brand">DSH 本体</div>
+    <nav>
+        <a href="#/overview" data-route="overview">总览</a>
+        <a href="#/entities" data-route="entities">实体维护</a>
+        <a href="#/search" data-route="search">搜索</a>
+        <a href="#/i18n" data-route="i18n">多语种</a>
+        <a href="#/promote" data-route="promote">晋升工作台</a>
+        <a href="#/ai" data-route="ai">AI 对话</a>
+    </nav>
+    <div class="sidebar-footer">
+        <span id="current-user">-</span>
+        <button class="link" id="btn-logout" type="button">退出</button>
+    </div>
+</aside>
+<main class="content">
+    <div id="status-bar" class="status-bar" role="status" aria-live="polite"></div>
+    <div id="view"></div>
+</main>
+<script src="/app.js"></script>
 </body>
 </html>

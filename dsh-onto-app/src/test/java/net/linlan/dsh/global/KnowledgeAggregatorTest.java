@@ -206,31 +206,31 @@ class KnowledgeAggregatorTest {
     @Order(9)
     @DisplayName("P1-14：统一监测视图参数化查询（分页/租户过滤/时间窗）")
     void testUnifiedMonitorParameterized() {
-        jdbcTemplate.update("DELETE FROM gwy_track_article WHERE article_hash LIKE 'p1mon-%'");
-        jdbcTemplate.update("DELETE FROM gwy_analyze_track_topic WHERE topic_name LIKE 'P1MON-%'");
+        jdbcTemplate.update("DELETE FROM onto_track_article WHERE article_hash LIKE 'p1mon-%'");
+        jdbcTemplate.update("DELETE FROM onto_analyze_track_topic WHERE topic_name LIKE 'P1MON-%'");
 
         jdbcTemplate.update(
-                "INSERT INTO gwy_analyze_track_topic (topic_name, topic_type, hotspot_region, status, alert_enabled, tenant_id, created_by) " +
+                "INSERT INTO onto_analyze_track_topic (topic_name, topic_type, hotspot_region, status, alert_enabled, tenant_id, created_by) " +
                 "VALUES ('P1MON-T1', 'EVENT', '区域A', 'active', 0, 1, 'test')");
         Long topic1Id = jdbcTemplate.queryForObject(
-                "SELECT id FROM gwy_analyze_track_topic WHERE topic_name = 'P1MON-T1'", Long.class);
+                "SELECT id FROM onto_analyze_track_topic WHERE topic_name = 'P1MON-T1'", Long.class);
         jdbcTemplate.update(
-                "INSERT INTO gwy_analyze_track_topic (topic_name, topic_type, hotspot_region, status, alert_enabled, tenant_id, created_by) " +
+                "INSERT INTO onto_analyze_track_topic (topic_name, topic_type, hotspot_region, status, alert_enabled, tenant_id, created_by) " +
                 "VALUES ('P1MON-T2', 'EVENT', '区域B', 'active', 0, 1, 'test')");
         Long topic2Id = jdbcTemplate.queryForObject(
-                "SELECT id FROM gwy_analyze_track_topic WHERE topic_name = 'P1MON-T2'", Long.class);
+                "SELECT id FROM onto_analyze_track_topic WHERE topic_name = 'P1MON-T2'", Long.class);
         jdbcTemplate.update(
-                "INSERT INTO gwy_analyze_track_topic (topic_name, topic_type, hotspot_region, status, alert_enabled, tenant_id, created_by) " +
+                "INSERT INTO onto_analyze_track_topic (topic_name, topic_type, hotspot_region, status, alert_enabled, tenant_id, created_by) " +
                 "VALUES ('P1MON-T3', 'EVENT', '区域C', 'active', 0, 2, 'test')");
 
         jdbcTemplate.update(
-                "INSERT INTO gwy_track_article (article_hash, title, topic_id, published, tenant_id, created_by) " +
+                "INSERT INTO onto_track_article (article_hash, title, topic_id, published, tenant_id, created_by) " +
                 "VALUES ('p1mon-a1', '近期文章1', ?, NOW(), 1, 'test')", topic1Id);
         jdbcTemplate.update(
-                "INSERT INTO gwy_track_article (article_hash, title, topic_id, published, tenant_id, created_by) " +
+                "INSERT INTO onto_track_article (article_hash, title, topic_id, published, tenant_id, created_by) " +
                 "VALUES ('p1mon-a2', '旧文章1', ?, '2020-01-01 00:00:00', 1, 'test')", topic1Id);
         jdbcTemplate.update(
-                "INSERT INTO gwy_track_article (article_hash, title, topic_id, published, tenant_id, created_by) " +
+                "INSERT INTO onto_track_article (article_hash, title, topic_id, published, tenant_id, created_by) " +
                 "VALUES ('p1mon-a3', '近期文章2', ?, NOW(), 1, 'test')", topic2Id);
 
         try {
@@ -255,8 +255,8 @@ class KnowledgeAggregatorTest {
             assertEquals(1L, ((Number) topic1Row.get("recent_article_count")).longValue(), "topic1 近 30 天文章数=1");
             assertNotNull(topic1Row.get("latest_article_time"), "latest_article_time 不应为 null");
         } finally {
-            jdbcTemplate.update("DELETE FROM gwy_track_article WHERE article_hash LIKE 'p1mon-%'");
-            jdbcTemplate.update("DELETE FROM gwy_analyze_track_topic WHERE topic_name LIKE 'P1MON-%'");
+            jdbcTemplate.update("DELETE FROM onto_track_article WHERE article_hash LIKE 'p1mon-%'");
+            jdbcTemplate.update("DELETE FROM onto_analyze_track_topic WHERE topic_name LIKE 'P1MON-%'");
         }
     }
 
@@ -363,9 +363,10 @@ class KnowledgeAggregatorTest {
         jdbcTemplate.update("DELETE FROM onto_global_kg_edge");
         jdbcTemplate.update("DELETE FROM onto_global_aggregation_log");
         jdbcTemplate.update("DELETE FROM onto_common_discovered_entity WHERE entity_name LIKE '测试%' OR entity_name LIKE '综合%' OR entity_name LIKE '增量%' OR entity_name LIKE '分页%' OR entity_name LIKE '概览%' OR entity_name LIKE '触发%'");
-        jdbcTemplate.update("DELETE FROM gwy_ontology_bilateral_relation WHERE country_a IN ('中国','法国','日本','A国')");
-        jdbcTemplate.update("DELETE FROM gwy_track_kg_node WHERE node_id LIKE 'node-%' OR node_id LIKE 'kg-%' OR node_id LIKE 'inc-%' OR node_id LIKE 'page-%' OR node_id LIKE 'view-%'");
-        jdbcTemplate.update("DELETE FROM gwy_track_kg_edge WHERE source_node_id LIKE 'node-%' OR source_node_id LIKE 'kg-%' OR source_node_id LIKE 'inc-%' OR source_node_id LIKE 'page-%'");
+        jdbcTemplate.update("DELETE FROM onto_ontology_attribute WHERE entity_id IN (SELECT id FROM onto_ontology_entity WHERE category = 'bilateralRelation')");
+        jdbcTemplate.update("DELETE FROM onto_ontology_entity WHERE category = 'bilateralRelation'");
+        jdbcTemplate.update("DELETE FROM onto_track_kg_node WHERE node_id LIKE 'node-%' OR node_id LIKE 'kg-%' OR node_id LIKE 'inc-%' OR node_id LIKE 'page-%' OR node_id LIKE 'view-%'");
+        jdbcTemplate.update("DELETE FROM onto_track_kg_edge WHERE source_node_id LIKE 'node-%' OR source_node_id LIKE 'kg-%' OR source_node_id LIKE 'inc-%' OR source_node_id LIKE 'page-%'");
     }
 
     private void cleanAllSourceData() {
@@ -375,9 +376,10 @@ class KnowledgeAggregatorTest {
         jdbcTemplate.update("DELETE FROM onto_global_kg_edge");
         jdbcTemplate.update("DELETE FROM onto_global_aggregation_log");
         jdbcTemplate.update("DELETE FROM onto_common_discovered_entity");
-        jdbcTemplate.update("DELETE FROM gwy_ontology_bilateral_relation WHERE country_a IN ('中国','法国','日本','A国')");
-        jdbcTemplate.update("DELETE FROM gwy_track_kg_node WHERE node_id LIKE 'node-%' OR node_id LIKE 'kg-%' OR node_id LIKE 'inc-%' OR node_id LIKE 'page-%' OR node_id LIKE 'view-%'");
-        jdbcTemplate.update("DELETE FROM gwy_track_kg_edge WHERE source_node_id LIKE 'node-%' OR source_node_id LIKE 'kg-%' OR source_node_id LIKE 'inc-%' OR source_node_id LIKE 'page-%'");
+        jdbcTemplate.update("DELETE FROM onto_ontology_attribute WHERE entity_id IN (SELECT id FROM onto_ontology_entity WHERE category = 'bilateralRelation')");
+        jdbcTemplate.update("DELETE FROM onto_ontology_entity WHERE category = 'bilateralRelation'");
+        jdbcTemplate.update("DELETE FROM onto_track_kg_node WHERE node_id LIKE 'node-%' OR node_id LIKE 'kg-%' OR node_id LIKE 'inc-%' OR node_id LIKE 'page-%' OR node_id LIKE 'view-%'");
+        jdbcTemplate.update("DELETE FROM onto_track_kg_edge WHERE source_node_id LIKE 'node-%' OR source_node_id LIKE 'kg-%' OR source_node_id LIKE 'inc-%' OR source_node_id LIKE 'page-%'");
     }
 
     private void insertDiscoveredEntity(String name, String type, int mentionCount, Long tenantId) {
@@ -388,22 +390,36 @@ class KnowledgeAggregatorTest {
     }
 
     private void insertBilateralRelation(String countryA, String countryB, String relationType, Long tenantId) {
+        String entityName = countryA + " - " + countryB;
         jdbcTemplate.update(
-                "INSERT INTO gwy_ontology_bilateral_relation (country_a, country_b, relation_type, tenant_id, created_by) " +
-                        "VALUES (?, ?, ?, ?, 'test')",
-                countryA, countryB, relationType, tenantId);
+                "INSERT INTO onto_ontology_entity (domain, category, entity_name, status, tenant_id, created_by) " +
+                        "VALUES ('siis', 'bilateralRelation', ?, 1, ?, 'test')",
+                entityName, tenantId);
+        Long entityId = jdbcTemplate.queryForObject(
+                "SELECT id FROM onto_ontology_entity WHERE category = 'bilateralRelation' AND entity_name = ? AND tenant_id = ? ORDER BY id DESC LIMIT 1",
+                Long.class, entityName, tenantId);
+        insertAttribute(entityId, "country_a", countryA, tenantId);
+        insertAttribute(entityId, "country_b", countryB, tenantId);
+        insertAttribute(entityId, "relation_type", relationType, tenantId);
+    }
+
+    private void insertAttribute(Long entityId, String name, String value, Long tenantId) {
+        jdbcTemplate.update(
+                "INSERT INTO onto_ontology_attribute (entity_id, attr_name, attr_value, attr_type, domain, tenant_id, created_by) " +
+                        "VALUES (?, ?, ?, 'STRING', 'siis', ?, 'test')",
+                entityId, name, value, tenantId);
     }
 
     private void insertKgNode(String nodeId, String nodeName, String nodeType, Long tenantId) {
         jdbcTemplate.update(
-                "INSERT INTO gwy_track_kg_node (node_id, node_name, node_type, tenant_id, created_by) " +
+                "INSERT INTO onto_track_kg_node (node_id, node_name, node_type, tenant_id, created_by) " +
                         "VALUES (?, ?, ?, ?, 'test')",
                 nodeId, nodeName, nodeType, tenantId);
     }
 
     private void insertKgEdge(String source, String target, String relationType, Long tenantId) {
         jdbcTemplate.update(
-                "INSERT INTO gwy_track_kg_edge (source_node_id, target_node_id, relation_type, tenant_id, created_by) " +
+                "INSERT INTO onto_track_kg_edge (source_node_id, target_node_id, relation_type, tenant_id, created_by) " +
                         "VALUES (?, ?, ?, ?, 'test')",
                 source, target, relationType, tenantId);
     }

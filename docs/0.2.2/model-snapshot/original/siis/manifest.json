@@ -1,0 +1,16 @@
+{
+  "model_type": "MANIFEST",
+  "version": "3.0",
+  "project": "siis",
+  "domain": "全球多语种信息监测与决策分析",
+  "base_manifest": "../../dsh-onto-base/src/main/resources/ontology-models/manifest.json",
+  "models": [
+    "siis-object.yaml",
+    "siis-behavior.yaml",
+    "siis-rule.yaml",
+    "siis-actor.yaml",
+    "siis-flow.yaml",
+    "siis-report.yaml",
+    "siis-ui.yaml"
+  ]
+}

@@ -72,7 +72,7 @@
 └──────┬──────────────────────────────────────────────────────────┘
        │ 对齐
 ┌──────▼──────────────────────────────────────────────────────────┐
-│  存储层：onto_ontology_type（14 类型注册表）│ gwy_ontology_*（8 专表）│
+│  存储层：onto_ontology_type（14 类型注册表）│ onto_ontology_entity + onto_ontology_attribute（EAV）│
 │  onto_ontology_{entity,term,location,...}（6 元数据表）           │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -132,6 +132,8 @@
 - 只校验 `TypeCatalog` 覆盖的 category，其余 category 透传（不影响存量）
 
 ### 4.4 晋升路由补齐（G3）
+
+> **方案 A / V1.0.5 更新**：下列 8 类目标表已统一为 `onto_ontology_entity`（按 `category` 区分），`dataSource=ONTO`；本段保留 0.2.2 基线记录。
 
 `OntologyPromotionService.TYPE_TO_TABLE` 从 6 类扩到 9 类（新增 hotspot/book/paper）：
 

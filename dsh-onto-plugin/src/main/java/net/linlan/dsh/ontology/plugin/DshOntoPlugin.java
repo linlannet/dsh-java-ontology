@@ -16,7 +16,7 @@ import java.util.List;
  * @since 2.0
  */
 public class DshOntoPlugin extends AbstractHarnessPlugin {
-    public static final String PLUGIN_ID = "dsh-onto";
+    public static final String PLUGIN_ID = "dsh-onto-plugin";
 
     private final AdminApiClient client = new AdminApiClient();
 
@@ -36,8 +36,8 @@ public class DshOntoPlugin extends AbstractHarnessPlugin {
     @Override
     public void configure(PluginContext context) {
         super.configure(context);
-        context.registerSystemPrompt("dsh-onto-capabilities", 20, """
-                ## DSH Onto Plugin v2.0
+        context.registerSystemPrompt("dsh-onto-plugin-capabilities", 20, """
+                ## DSH Onto Plugin v0.2.2
                 - 统一工作台工具：workspace_overview 查询工作空间概览。
                 - 全局汇聚工具：knowledge_aggregate 触发知识汇聚（全量/增量/日志/统一视图）。
                 - 主任决策工具：director_overview 查询主任决策概览。

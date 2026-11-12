@@ -1,0 +1,467 @@
+# M1 对象模型元文件（产品层 base）- m1-object-model.yaml
+# 通用本体平台框架：系统用户/本体元数据/本体域 8 类 + 沉淀域/全局域 + 动态属性/通用关系
+# 多业务方向支持：siis / factory / ecommerce / city-ops（通过 domain 字段隔离）
+model_type: OBJECT
+version: "3.0"
+domain: "通用本体知识库平台"
+
+aggregates:
+  - id: AGG-SYS-USER-001
+    name: 系统用户
+    alias: SysUser
+    aggregateType: AGGREGATE_ROOT
+    description: 平台用户，含主任/研究员/访客三种角色层级
+    lifecycle: [正常, 停用]
+    tags: [系统域, 共享层]
+    attributes:
+      - { name: userId, label: 用户ID, type: Long, required: true, unique: true }
+      - { name: tenantId, label: 租户ID, type: Long, required: false, description: "主任可为NULL" }
+      - { name: roleLevel, label: 角色层级, type: Enum, enumValues: [0_主任, 1_研究员, 2_访客], required: true, defaultValue: "2" }
+      - { name: userName, label: 用户名, type: String, required: true, unique: true }
+      - { name: nickName, label: 昵称, type: String, required: false }
+      - { name: email, label: 邮箱, type: String, required: false }
+      - { name: phonenumber, label: 手机号, type: String, required: false }
+      - { name: password, label: 密码, type: String, required: true, description: "加密存储" }
+      - { name: status, label: 状态, type: Enum, enumValues: [0_正常, 1_停用], required: true, defaultValue: "0" }
+      - { name: loginIp, label: 最后登录IP, type: String, required: false }
+      - { name: loginDate, label: 最后登录时间, type: DateTime, required: false }
+
+  # ══════════════════════════════════════════════════════════
+  # 二、本体域 gwy_ontology_（14 实体，共享层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-ONT-VERSION-001
+    name: 本体版本
+    alias: OntologyVersion
+    category: version
+    aggregateType: AGGREGATE_ROOT
+    description: 本体知识库版本记录，支持多版本管理
+    lifecycle: [草稿, 发布, 归档]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: versionCode, label: 版本号, type: String, required: true }
+      - { name: versionName, label: 版本名称, type: String, required: false }
+      - { name: entityCount, label: 实体数量, type: Integer, defaultValue: "0" }
+      - { name: source, label: 数据来源, type: String, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [0_草稿, 1_发布, 2_归档], defaultValue: "0" }
+
+  - id: AGG-ONT-ENTITY-001
+    name: 本体实体
+    alias: OntologyEntity
+    category: entity
+    aggregateType: AGGREGATE_ROOT
+    description: 通用本体实体表，支持 country/organization/person/location/media/book/paper/term 等类别
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: category, label: 类别, type: Enum, enumValues: [country, organization, person, location, media, book, paper, term], required: true }
+      - { name: entityName, label: 实体名称, type: String, required: true, description: "默认中文" }
+      - { name: lang, label: 主语种, type: Enum, enumValues: [zh, en, fr, ar, ru, es, ja, de], defaultValue: "zh" }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: source, label: 来源, type: String, required: false }
+      - { name: wikiUrl, label: Wiki链接, type: String, required: false }
+      - { name: status, label: 状态, type: Integer, defaultValue: "1" }
+    entities:
+      - name: 多语种翻译
+        id: AGG-ONT-I18N-001
+        alias: OntologyI18n
+        category: i18n
+        description: 本体实体的多语种翻译记录
+        localId: id
+        cardinality: ZERO_OR_MORE
+        cascadeDelete: true
+        attributes:
+          - { name: id, label: 主键, type: Long, required: true }
+          - { name: entityId, label: 关联实体ID, type: Long, required: true }
+          - { name: category, label: 本体分类, type: String, required: true }
+          - { name: lang, label: 语种, type: Enum, enumValues: [en, fr, ar, ru, es, ja, de], required: true }
+          - { name: name, label: 该语种名称, type: String, required: false }
+          - { name: description, label: 该语种描述, type: Text, required: false }
+
+  - id: AGG-ONT-TERM-001
+    name: 术语
+    alias: OntologyTerm
+    category: term
+    aggregateType: AGGREGATE_ROOT
+    description: 术语库，含分类、定义、来源
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: termName, label: 术语名, type: String, required: true }
+      - { name: category, label: 分类, type: String, required: false }
+      - { name: definition, label: 定义, type: Text, required: false }
+      - { name: source, label: 来源, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+  - id: AGG-ONT-EVENT-TYPE-001
+    name: 事件类型
+    alias: OntologyEventType
+    category: eventType
+    aggregateType: AGGREGATE_ROOT
+    description: 事件类型库，树形结构，含父类型和排序
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: eventType, label: 事件类型, type: String, required: true }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: parentId, label: 父类型ID, type: Long, required: false, description: "树形结构" }
+      - { name: sortOrder, label: 排序, type: Integer, defaultValue: "0" }
+
+  - id: AGG-ONT-LOCATION-001
+    name: 地名
+    alias: OntologyLocation
+    category: location
+    aggregateType: AGGREGATE_ROOT
+    description: 地名信息库，含类型/父级/所属国家/人口/面积等
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 地名, type: String, required: true }
+      - { name: locType, label: 类型, type: Enum, enumValues: [country, city, region, river, mountain], required: false }
+      - { name: parentId, label: 父级ID, type: Long, required: false }
+      - { name: country, label: 所属国家, type: String, required: false }
+      - { name: capital, label: 首都, type: String, required: false }
+      - { name: population, label: 人口, type: String, required: false }
+      - { name: area, label: 面积, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+
+  - id: AGG-ONT-COUNTRY-001
+    name: 国家
+    alias: OntologyCountry
+    category: country
+    aggregateType: AGGREGATE_ROOT
+    description: 国家信息库，含 ISO 代码、洲、首都、语言、货币等
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 国家名称, type: String, required: true }
+      - { name: isoCode, label: ISO代码, type: String, required: false, unique: true }
+      - { name: continent, label: 所属洲, type: String, required: false }
+      - { name: capital, label: 首都, type: String, required: false }
+      - { name: language, label: 主要语言, type: String, required: false }
+      - { name: currency, label: 货币, type: String, required: false }
+      - { name: population, label: 人口, type: String, required: false }
+      - { name: area, label: 面积, type: String, required: false }
+
+  - id: AGG-ONT-ORG-001
+    name: 机构
+    alias: OntologyOrganization
+    category: organization
+    aggregateType: AGGREGATE_ROOT
+    description: 机构信息库，含政府/NGO/企业/媒体/大学等类型
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 机构名称, type: String, required: true }
+      - { name: orgType, label: 类型, type: Enum, enumValues: [government, ngo, company, media, university], required: false }
+      - { name: country, label: 所属国家, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: website, label: 官网, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+  - id: AGG-ONT-PERSON-001
+    name: 人物
+    alias: OntologyPerson
+    category: person
+    aggregateType: AGGREGATE_ROOT
+    description: 人物信息库，含性别、出生日期、国籍、职业、头衔、所属机构等
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 姓名, type: String, required: true }
+      - { name: gender, label: 性别, type: String, required: false }
+      - { name: birthDate, label: 出生日期, type: String, required: false }
+      - { name: country, label: 国籍, type: String, required: false }
+      - { name: occupation, label: 职业, type: String, required: false }
+      - { name: title, label: 头衔, type: String, required: false }
+      - { name: affiliation, label: 所属机构, type: String, required: false }
+      - { name: bio, label: 简介, type: Text, required: false }
+      - { name: portraitUrl, label: 头像URL, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+  - id: AGG-ONT-HOTSPOT-001
+    name: 热点话题
+    alias: OntologyHotspot
+    category: hotspot
+    aggregateType: AGGREGATE_ROOT
+    description: 热点话题库，含关键词、相关国家、热度分、风险等级
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: hotspotName, label: 热点名称, type: String, required: true }
+      - { name: hotspotType, label: 类型, type: String, required: false }
+      - { name: keywords, label: 关键词JSON, type: Text, required: false }
+      - { name: relatedCountries, label: 相关国家, type: String, required: false }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: heatScore, label: 热度分, type: Integer, defaultValue: "0" }
+      - { name: riskLevel, label: 风险等级, type: Enum, enumValues: [low, medium, high, critical], defaultValue: "low" }
+
+  - id: AGG-ONT-MEDIA-001
+    name: 媒体
+    alias: OntologyMedia
+    category: media
+    aggregateType: AGGREGATE_ROOT
+    description: 媒体资料库，含类型/所属国家/语言/受众规模/倾向评级
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: name, label: 媒体名称, type: String, required: true }
+      - { name: mediaType, label: 类型, type: Enum, enumValues: [newspaper, magazine, tv, radio, web, news_agency], required: false }
+      - { name: country, label: 所属国家, type: String, required: false }
+      - { name: language, label: 语言, type: String, required: false }
+      - { name: website, label: 官网, type: String, required: false }
+      - { name: audience, label: 受众规模, type: String, required: false }
+      - { name: biasRating, label: 倾向评级, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+  - id: AGG-ONT-BOOK-001
+    name: 书籍
+    alias: OntologyBook
+    category: book
+    aggregateType: AGGREGATE_ROOT
+    description: 书籍信息库，含作者/出版社/出版年/ISBN/页数/分类/摘要
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: title, label: 书名, type: String, required: true }
+      - { name: author, label: 作者, type: String, required: false }
+      - { name: publisher, label: 出版社, type: String, required: false }
+      - { name: publishYear, label: 出版年, type: String, required: false }
+      - { name: isbn, label: ISBN, type: String, required: false }
+      - { name: pages, label: 页数, type: Integer, required: false }
+      - { name: category, label: 分类, type: String, required: false }
+      - { name: summary, label: 摘要, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+  - id: AGG-ONT-PAPER-001
+    name: 论文
+    alias: OntologyPaper
+    category: paper
+    aggregateType: AGGREGATE_ROOT
+    description: 论文信息库，含作者/机构/期刊/发表年份/DOI/摘要/关键词/学科分类
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: title, label: 论文标题, type: String, required: true }
+      - { name: author, label: 作者, type: String, required: false }
+      - { name: institution, label: 机构, type: String, required: false }
+      - { name: journal, label: 期刊, type: String, required: false }
+      - { name: publishYear, label: 发表年份, type: String, required: false }
+      - { name: doi, label: DOI, type: String, required: false }
+      - { name: summary, label: 摘要, type: Text, required: false }
+      - { name: keywords, label: 关键词, type: String, required: false }
+      - { name: category, label: 学科分类, type: String, required: false }
+      - { name: lang, label: 语种, type: String, defaultValue: "zh" }
+
+  - id: AGG-ONT-BILATERAL-001
+    name: 双边关系
+    alias: OntologyBilateralRelation
+    category: bilateralRelation
+    aggregateType: AGGREGATE_ROOT
+    description: 国家间双边关系表，含关系类型/级别/起始年份
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: countryA, label: 国家A, type: String, required: true }
+      - { name: countryB, label: 国家B, type: String, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: relationLevel, label: 关系级别, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: startYear, label: 起始年份, type: String, required: false }
+
+  # ══════════════════════════════════════════════════════════
+  # 三、知识沉淀域 gwy_common_（4 实体，个人层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-CMN-DISCOVERED-ENTITY-001
+    name: 发现实体
+    alias: CommonDiscoveredEntity
+    aggregateType: AGGREGATE_ROOT
+    description: 个人发现的实体，含来源主题/首次发现时间/提及次数/晋升状态
+    lifecycle: [DISCOVERED, PROMOTED]
+    tags: [沉淀域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityName, label: 实体名称, type: String, required: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: sourceTopicId, label: 来源主题ID, type: Long, required: false }
+      - { name: firstSeenTime, label: 首次发现时间, type: DateTime, required: false }
+      - { name: mentionCount, label: 提及次数, type: Integer, defaultValue: "1" }
+      - { name: ontologyEntityId, label: 关联本体实体ID, type: Long, required: false, description: "晋升后回填" }
+      - { name: status, label: 状态, type: Enum, enumValues: [DISCOVERED, PROMOTED], defaultValue: "DISCOVERED" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-CMN-TENANT-RELATION-001
+    name: 租户关系资产
+    alias: CommonTenantRelationAsset
+    aggregateType: AGGREGATE_ROOT
+    description: 租户关系资产，含主体/客体实体/关系类型/平均得分/关联主题
+    lifecycle: [有效, 无效]
+    tags: [沉淀域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: subjectEntityId, label: 主体实体ID, type: Long, required: true }
+      - { name: objectEntityId, label: 客体实体ID, type: Long, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: avgScore, label: 平均得分, type: Float, required: false }
+      - { name: topicIds, label: 关联主题ID列表, type: String, required: false }
+      - { name: lastUpdated, label: 最后更新时间, type: DateTime, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-CMN-VECTOR-INDEX-001
+    name: 个人向量索引
+    alias: CommonPersonalVectorIndex
+    aggregateType: AGGREGATE_ROOT
+    description: 个人向量索引，含实体/类型/嵌入向量/模型版本
+    lifecycle: [有效, 无效]
+    tags: [沉淀域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityId, label: 实体ID, type: Long, required: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: embedding, label: 向量嵌入, type: Blob, required: false }
+      - { name: modelVersion, label: 模型版本, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-CMN-LLM-CHAT-001
+    name: LLM对话历史
+    alias: CommonLlmChatHistory
+    aggregateType: AGGREGATE_ROOT
+    description: LLM对话历史，含Agent名称/角色/内容/会话ID
+    lifecycle: [有效, 无效]
+    tags: [沉淀域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: agentName, label: Agent名称, type: String, required: false }
+      - { name: role, label: 角色, type: Enum, enumValues: [user, assistant, system], required: false }
+      - { name: content, label: 内容, type: Text, required: false }
+      - { name: sessionId, label: 会话ID, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  # ══════════════════════════════════════════════════════════
+  # 四、全局汇聚域 gwy_global_（5 实体，共享层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-GLB-DISCOVERED-ENTITY-001
+    name: 全局发现实体
+    alias: GlobalDiscoveredEntity
+    aggregateType: AGGREGATE_ROOT
+    description: 全局发现实体，汇聚多租户发现，含来源租户列表/总提及次数/时间范围
+    lifecycle: [有效, 无效]
+    tags: [全局域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityName, label: 实体名称, type: String, required: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: tenantIds, label: 来源租户ID列表JSON, type: String, required: false }
+      - { name: totalMentionCount, label: 总提及次数, type: Integer, defaultValue: "0" }
+      - { name: firstSeenTime, label: 首次发现时间, type: DateTime, required: false }
+      - { name: lastSeenTime, label: 最后发现时间, type: DateTime, required: false }
+
+  - id: AGG-GLB-BILATERAL-001
+    name: 全局双边关系
+    alias: GlobalBilateralRelation
+    aggregateType: AGGREGATE_ROOT
+    description: 全局双边关系，汇聚多租户关系，含主体/客体/关系类型/平均得分/样本数
+    lifecycle: [有效, 无效]
+    tags: [全局域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: subjectEntityName, label: 主体实体名, type: String, required: true }
+      - { name: objectEntityName, label: 客体实体名, type: String, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: tenantIds, label: 来源租户ID列表JSON, type: String, required: false }
+      - { name: avgScore, label: 平均得分, type: Float, required: false }
+      - { name: sampleCount, label: 样本数, type: Integer, defaultValue: "0" }
+
+  - id: AGG-GLB-KG-NODE-001
+    name: 全局图谱节点
+    alias: GlobalKgNode
+    aggregateType: AGGREGATE_ROOT
+    description: 全局知识图谱节点，含关联本体实体/节点名称/类型/来源租户/跨租户权重
+    lifecycle: [有效, 无效]
+    tags: [全局域, 共享层, 知识图谱]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: ontologyEntityId, label: 关联本体实体ID, type: Long, required: false }
+      - { name: nodeName, label: 节点名称, type: String, required: false }
+      - { name: nodeType, label: 节点类型, type: String, required: false }
+      - { name: tenantIds, label: 来源租户ID列表JSON, type: String, required: false }
+      - { name: crossTenantWeight, label: 跨租户权重, type: Float, defaultValue: "1.0" }
+
+  - id: AGG-GLB-KG-EDGE-001
+    name: 全局图谱边
+    alias: GlobalKgEdge
+    aggregateType: AGGREGATE_ROOT
+    description: 全局知识图谱边，含源/目标节点/关系类型/来源租户/跨租户权重
+    lifecycle: [有效, 无效]
+    tags: [全局域, 共享层, 知识图谱]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: sourceNodeId, label: 源节点ID, type: String, required: true }
+      - { name: targetNodeId, label: 目标节点ID, type: String, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: tenantIds, label: 来源租户ID列表JSON, type: String, required: false }
+      - { name: crossTenantWeight, label: 跨租户权重, type: Float, defaultValue: "1.0" }
+
+  - id: AGG-GLB-AGG-LOG-001
+    name: 全局汇聚日志
+    alias: GlobalAggregationLog
+    aggregateType: AGGREGATE_ROOT
+    description: 全局汇聚日志，含汇聚类型/触发类型/实体数/关系数/耗时/状态
+    lifecycle: [running, success, failed]
+    tags: [全局域, 共享层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: aggregationType, label: 汇聚类型, type: Enum, enumValues: [FULL, INCREMENTAL], required: false }
+      - { name: triggerType, label: 触发类型, type: Enum, enumValues: [SCHEDULED, EVENT, MANUAL], required: false }
+      - { name: entityCount, label: 实体数量, type: Integer, defaultValue: "0" }
+      - { name: relationCount, label: 关系数量, type: Integer, defaultValue: "0" }
+      - { name: durationMs, label: 耗时毫秒, type: Long, defaultValue: "0" }
+      - { name: status, label: 状态, type: Enum, enumValues: [running, success, failed], defaultValue: "running" }
+
+  # ══════════════════════════════════════════════════════════
+  # 五、动态属性扩展 + 通用关系（多业务方向支持）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-ONT-ATTRIBUTE-001
+    name: 本体动态属性
+    alias: OntologyAttribute
+    aggregateType: AGGREGATE_ROOT
+    description: 本体实体的动态属性扩展，支持各业务方向自定义字段（工厂设备额定功率/电商商品价格/城市设施养护周期等）
+    lifecycle: [有效, 无效]
+    tags: [本体域, 底层, 动态扩展]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityId, label: 关联实体ID, type: Long, required: true }
+      - { name: attrName, label: 属性名, type: String, required: true, description: "如 rated_power / price / lifespan" }
+      - { name: attrValue, label: 属性值, type: Text, required: false }
+      - { name: attrType, label: 属性类型, type: Enum, enumValues: [STRING, NUMBER, DATE, JSON, BOOLEAN], defaultValue: "STRING" }
+      - { name: domain, label: 业务方向, type: String, defaultValue: "siis", description: "siis/factory/ecommerce/city-ops" }
+
+  - id: AGG-ONT-RELATION-001
+    name: 通用关系
+    alias: OntologyRelation
+    aggregateType: AGGREGATE_ROOT
+    description: 通用实体间关系表，支持双边关系/供应关系/包含关系/管理关系等
+    lifecycle: [有效, 无效]
+    tags: [本体域, 底层, 通用关系]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: subjectEntityId, label: 主体实体ID, type: Long, required: true }
+      - { name: objectEntityId, label: 客体实体ID, type: Long, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: true, description: "bilateral/supply/contain/manage" }
+      - { name: relationLevel, label: 关系级别, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: domain, label: 业务方向, type: String, defaultValue: "siis" }

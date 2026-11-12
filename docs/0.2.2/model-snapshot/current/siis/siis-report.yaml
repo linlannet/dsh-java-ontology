@@ -1,0 +1,156 @@
+# SIIS 报表模型元文件（项目层）- siis-report.yaml
+# SIIS 业务特定报表：文章查询 + 监测概览 + 主题分析 + 报告列表
+model_type: REPORT
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+query_reports:
+  - id: REP-ARTICLE-LIST
+    name: 文章列表查询
+    alias: articleList
+    objectType: LIST_QUERY
+    description: 按主题/语种/情感/时间范围查询采集文章
+    behaviorRef: Article_Query
+    sourceObjects:
+      - { objectRef: AGG-TRK-ARTICLE-001, alias: article, primary: true }
+    joins: []
+    parameters:
+      - { name: topicId, label: 主题ID, dataType: Long, required: false, allowedOperators: [EQ], sourceField: article.topicId }
+      - { name: lang, label: 语种, dataType: String, required: false, allowedOperators: [EQ], sourceField: article.lang }
+      - { name: sentiment, label: 情感, dataType: String, required: false, allowedOperators: [EQ], sourceField: article.sentiment }
+      - { name: publishedFrom, label: 发布时间起, dataType: DateTime, required: false, allowedOperators: [GE], sourceField: article.published }
+      - { name: publishedTo, label: 发布时间止, dataType: DateTime, required: false, allowedOperators: [LE], sourceField: article.published }
+      - { name: nlpStatus, label: NLP状态, dataType: String, required: false, allowedOperators: [EQ], sourceField: article.nlpStatus }
+    conditions:
+      - { conditionId: C01, leftExpression: article.topicId, operator: EQ, parameterRef: topicId, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C02, leftExpression: article.lang, operator: EQ, parameterRef: lang, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C03, leftExpression: article.sentiment, operator: EQ, parameterRef: sentiment, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C04, leftExpression: article.published, operator: GE, parameterRef: publishedFrom, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C05, leftExpression: article.published, operator: LE, parameterRef: publishedTo, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C06, leftExpression: article.nlpStatus, operator: EQ, parameterRef: nlpStatus, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+    resultColumns:
+      - { name: id, label: 文章ID, dataType: Long, sourceExpression: article.id, aggregateFunction: NONE }
+      - { name: title, label: 标题, dataType: String, sourceExpression: article.title, aggregateFunction: NONE }
+      - { name: lang, label: 语种, dataType: String, sourceExpression: article.lang, aggregateFunction: NONE }
+      - { name: published, label: 发布时间, dataType: DateTime, sourceExpression: article.published, aggregateFunction: NONE, sortable: true }
+      - { name: source, label: 来源, dataType: String, sourceExpression: article.source, aggregateFunction: NONE }
+      - { name: sentiment, label: 情感, dataType: String, sourceExpression: article.sentiment, aggregateFunction: NONE }
+      - { name: nlpStatus, label: NLP状态, dataType: String, sourceExpression: article.nlpStatus, aggregateFunction: NONE }
+    groupBy: []
+    having: []
+    orderBy:
+      - { expression: article.published, direction: DESC }
+    pagination: { enabled: true, defaultPageSize: 20, maxPageSize: 100 }
+    reportOptions: null
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # REP-02 监测域概览（STATISTICAL_QUERY）
+  # ══════════════════════════════════════════════════════════
+  - id: REP-TRACK-OVERVIEW
+    name: 监测域概览统计
+    alias: trackOverview
+    objectType: STATISTICAL_QUERY
+    description: 按租户汇总文章数/告警数/主题数/图谱节点数
+    behaviorRef: Track_QueryList
+    sourceObjects:
+      - { objectRef: AGG-TRK-ARTICLE-001, alias: article, primary: true }
+      - { objectRef: AGG-ANZ-TOPIC-001, alias: topic, primary: false }
+      - { objectRef: AGG-DSP-ALERT-RECORD-001, alias: alert, primary: false }
+      - { objectRef: AGG-TRK-KG-NODE-001, alias: kgNode, primary: false }
+    joins: []
+    parameters:
+      - { name: tenantId, label: 租户ID, dataType: Long, required: false, allowedOperators: [EQ], sourceField: article.tenantId }
+    conditions:
+      - { conditionId: C01, leftExpression: article.tenantId, operator: EQ, parameterRef: tenantId, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+    resultColumns:
+      - { name: tenantId, label: 租户ID, dataType: Long, sourceExpression: article.tenantId, aggregateFunction: NONE }
+      - { name: articleCount, label: 文章总数, dataType: Integer, sourceExpression: article.id, aggregateFunction: COUNT }
+      - { name: topicCount, label: 主题数, dataType: Integer, sourceExpression: topic.id, aggregateFunction: COUNT }
+      - { name: alertCount, label: 告警数, dataType: Integer, sourceExpression: alert.id, aggregateFunction: COUNT }
+      - { name: kgNodeCount, label: 图谱节点数, dataType: Integer, sourceExpression: kgNode.id, aggregateFunction: COUNT }
+    groupBy: [article.tenantId]
+    having: []
+    orderBy: []
+    pagination: { enabled: false, defaultPageSize: 0, maxPageSize: 0 }
+    reportOptions: null
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # REP-03 主题分析报表（STATISTICAL_QUERY）
+  # ══════════════════════════════════════════════════════════
+  - id: REP-TOPIC-ANALYSIS
+    name: 主题分析报表
+    alias: topicAnalysis
+    objectType: STATISTICAL_QUERY
+    description: 按主题汇总文章数/情感分布/告警数/最新文章时间
+    behaviorRef: Analyze_QueryTopic
+    sourceObjects:
+      - { objectRef: AGG-ANZ-TOPIC-001, alias: topic, primary: true }
+      - { objectRef: AGG-TRK-ARTICLE-001, alias: article, primary: false }
+      - { objectRef: AGG-DSP-ALERT-RECORD-001, alias: alert, primary: false }
+    joins:
+      - { joinId: J01, joinType: LEFT, leftSource: topic, rightSource: article, conditionExpression: "article.topicId == topic.id" }
+    parameters:
+      - { name: topicType, label: 主题类型, dataType: String, required: false, allowedOperators: [EQ], sourceField: topic.topicType }
+      - { name: status, label: 状态, dataType: String, required: false, allowedOperators: [EQ], sourceField: topic.status }
+    conditions:
+      - { conditionId: C01, leftExpression: topic.topicType, operator: EQ, parameterRef: topicType, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C02, leftExpression: topic.status, operator: EQ, parameterRef: status, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+    resultColumns:
+      - { name: topicName, label: 主题名称, dataType: String, sourceExpression: topic.topicName, aggregateFunction: NONE }
+      - { name: topicType, label: 主题类型, dataType: String, sourceExpression: topic.topicType, aggregateFunction: NONE }
+      - { name: articleCount, label: 文章数, dataType: Integer, sourceExpression: article.id, aggregateFunction: COUNT }
+      - { name: alertCount, label: 告警数, dataType: Integer, sourceExpression: alert.id, aggregateFunction: COUNT }
+      - { name: latestArticle, label: 最新文章时间, dataType: DateTime, sourceExpression: article.published, aggregateFunction: MAX }
+      - { name: status, label: 状态, dataType: String, sourceExpression: topic.status, aggregateFunction: NONE }
+    groupBy: [topic.id, topic.topicName, topic.topicType, topic.status]
+    having: []
+    orderBy:
+      - { expression: articleCount, direction: DESC }
+    pagination: { enabled: true, defaultPageSize: 20, maxPageSize: 100 }
+    reportOptions: null
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # REP-04 报告列表查询（LIST_QUERY）
+  # ══════════════════════════════════════════════════════════
+  - id: REP-REPORT-LIST
+    name: 报告列表查询
+    alias: reportList
+    objectType: LIST_QUERY
+    description: 按类型/主题/状态/时间范围查询报告
+    behaviorRef: Display_QueryReport
+    sourceObjects:
+      - { objectRef: AGG-DSP-RPT-REPORT-001, alias: report, primary: true }
+    joins: []
+    parameters:
+      - { name: reportType, label: 报告类型, dataType: String, required: false, allowedOperators: [EQ], sourceField: report.reportType }
+      - { name: topicId, label: 主题ID, dataType: Long, required: false, allowedOperators: [EQ], sourceField: report.topicId }
+      - { name: status, label: 状态, dataType: String, required: false, allowedOperators: [EQ], sourceField: report.status }
+      - { name: scope, label: 可见范围, dataType: String, required: false, allowedOperators: [EQ], sourceField: report.scope }
+    conditions:
+      - { conditionId: C01, leftExpression: report.reportType, operator: EQ, parameterRef: reportType, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C02, leftExpression: report.topicId, operator: EQ, parameterRef: topicId, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C03, leftExpression: report.status, operator: EQ, parameterRef: status, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C04, leftExpression: report.scope, operator: EQ, parameterRef: scope, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+    resultColumns:
+      - { name: id, label: 报告ID, dataType: Long, sourceExpression: report.id, aggregateFunction: NONE }
+      - { name: reportName, label: 报告名称, dataType: String, sourceExpression: report.reportName, aggregateFunction: NONE }
+      - { name: reportType, label: 报告类型, dataType: String, sourceExpression: report.reportType, aggregateFunction: NONE }
+      - { name: status, label: 状态, dataType: String, sourceExpression: report.status, aggregateFunction: NONE }
+      - { name: scope, label: 可见范围, dataType: String, sourceExpression: report.scope, aggregateFunction: NONE }
+      - { name: viewCount, label: 浏览次数, dataType: Integer, sourceExpression: report.viewCount, aggregateFunction: NONE, sortable: true }
+      - { name: createTime, label: 创建时间, dataType: DateTime, sourceExpression: report.createTime, aggregateFunction: NONE, sortable: true }
+    groupBy: []
+    having: []
+    orderBy:
+      - { expression: report.createTime, direction: DESC }
+    pagination: { enabled: true, defaultPageSize: 20, maxPageSize: 100 }
+    reportOptions: null
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # REP-05 统一知识图谱查询（DETAIL_QUERY，主任专属）
+  # ══════════════════════════════════════════════════════════

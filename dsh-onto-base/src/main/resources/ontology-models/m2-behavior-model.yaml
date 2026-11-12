@@ -57,78 +57,6 @@ behaviors:
       - behaviorRef: Global_Aggregate_Entity
         description: 晋升后触发全局汇聚更新
 
-  # ══════════════════════════════════════════════════════════
-  # 二、监测域行为（个人层，研究员操作）
-  # ══════════════════════════════════════════════════════════
-      - field: task.status
-        setValue: "running"
-    appliedRules: [RULE-CRAWL-RATE-LIMIT]
-    requiredPermissions: []
-    syncTriggers:
-      - behaviorRef: Article_Save
-        description: 采集到文章后保存
-      - behaviorRef: CrawlTask_Complete
-        description: 采集完成后更新任务状态
-
-      - field: task.status
-        setValue: "success / failed"
-    appliedRules: []
-    requiredPermissions: []
-    syncTriggers: []
-
-      - field: article.nlpStatus
-        setValue: "PENDING"
-    appliedRules: [RULE-ARTICLE-DEDUP]
-    requiredPermissions: []
-    syncTriggers:
-      - behaviorRef: Nlp_Process
-        description: 文章保存后触发NLP处理
-
-      - behaviorRef: Kg_Build_Log
-        description: 记录构建日志
-
-      - field: article.nlpStatus
-        setValue: "COMPLETED"
-    appliedRules: [RULE-NLP-MODEL-DEPLOYED]
-    requiredPermissions: []
-    syncTriggers:
-      - behaviorRef: Alert_Check
-        description: NLP完成后检查告警规则
-
-      - behaviorRef: Alert_Record_Create
-        description: 规则匹配时创建告警记录
-
-      - field: alertRecord.status
-        setValue: "unread"
-    appliedRules: []
-    requiredPermissions: []
-    syncTriggers:
-      - behaviorRef: Push_Send
-        description: 告警创建后触发推送
-
-  # ══════════════════════════════════════════════════════════
-  # 四、展示域行为（个人层，报告 + 推送 + 推荐）
-  # ══════════════════════════════════════════════════════════
-      - field: report.status
-        setValue: "draft"
-    appliedRules: []
-    requiredPermissions: [PERM-DISPLAY-REPORT]
-    syncTriggers: []
-
-      - field: report.status
-        setValue: "published"
-      - field: report.publishTime
-        setValue: "当前时间"
-    appliedRules: []
-    requiredPermissions: [PERM-DISPLAY-REPORT]
-    syncTriggers: []
-
-      - field: pushRecord.status
-        setValue: "success / failed"
-    appliedRules: []
-    requiredPermissions: []
-    syncTriggers: []
-
   - id: DiscoveredEntity_Record
     name: 记录发现实体
     ownerEntity: AGG-CMN-DISCOVERED-ENTITY-001
@@ -205,7 +133,3 @@ behaviors:
     appliedRules: [RULE-AGGREGATE-DEDUP]
     requiredPermissions: []
     syncTriggers: []
-
-  # ══════════════════════════════════════════════════════════
-  # 七、通用 CRUD（各域通用查询行为）
-  # ══════════════════════════════════════════════════════════

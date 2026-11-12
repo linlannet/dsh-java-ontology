@@ -1,0 +1,560 @@
+# SIIS 对象模型元文件（项目层）- siis-object.yaml
+# SIIS 业务特定实体：监测/分析/展示三域（个人层）
+# 注：本体域 8 类（国家/机构/人物/热点/媒体/书籍/论文/双边关系）已归位到基座 m1-object-model.yaml，本文件不再重复定义
+model_type: OBJECT
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+aggregates:
+  # ══════════════════════════════════════════════════════════
+  # 一、监测域 gwy_track_（11 实体，个人层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-TRK-ARTICLE-001
+    name: 文章
+    alias: TrackArticle
+    aggregateType: AGGREGATE_ROOT
+    description: 采集到的文章记录，含哈希去重/标题/URL/语种/发布时间/情感/NLP状态
+    lifecycle: [PENDING, COMPLETED]
+    tags: [监测域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleHash, label: 文章哈希, type: String, required: true, description: "用于去重" }
+      - { name: title, label: 标题, type: String, required: true }
+      - { name: url, label: URL, type: String, required: false }
+      - { name: lang, label: 语种, type: String, required: false }
+      - { name: published, label: 发布时间, type: DateTime, required: false }
+      - { name: source, label: 来源, type: String, required: false }
+      - { name: sourceId, label: 来源ID, type: Long, required: false }
+      - { name: topicId, label: 主题ID, type: Long, required: false }
+      - { name: crawlTaskId, label: 采集任务ID, type: Long, required: false }
+      - { name: sentiment, label: 情感, type: String, required: false }
+      - { name: sentimentScore, label: 情感得分, type: Float, required: false }
+      - { name: nlpStatus, label: NLP状态, type: String, defaultValue: "PENDING" }
+      - { name: content, label: 内容, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-CRAWL-SOURCE-001
+    name: 采集源
+    alias: TrackCrawlSource
+    aggregateType: AGGREGATE_ROOT
+    description: 采集源配置，含类型/URL/语种/分类/采集间隔/上次采集状态
+    lifecycle: [启用, 停用]
+    tags: [监测域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: sourceName, label: 源名称, type: String, required: true }
+      - { name: sourceType, label: 源类型, type: Enum, enumValues: [rss, api, web, manual], required: false }
+      - { name: url, label: URL, type: String, required: true }
+      - { name: lang, label: 语种, type: String, required: false }
+      - { name: category, label: 分类, type: String, required: false }
+      - { name: enabled, label: 是否启用, type: Integer, defaultValue: "1" }
+      - { name: intervalMinutes, label: 采集间隔(分钟), type: Integer, defaultValue: "60" }
+      - { name: lastCrawlTime, label: 上次采集时间, type: DateTime, required: false }
+      - { name: lastStatus, label: 上次状态, type: String, required: false }
+      - { name: lastArticleCount, label: 上次文章数, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-CRAWL-SUB-001
+    name: 采集订阅
+    alias: TrackCrawlSubscription
+    aggregateType: AGGREGATE_ROOT
+    description: 采集订阅配置，关联源/关键词组/用户，含时间窗口
+    lifecycle: [启用, 停用]
+    tags: [监测域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: subscriptionName, label: 订阅名称, type: String, required: true }
+      - { name: sourceIds, label: 采集源ID列表, type: String, required: false }
+      - { name: keywordGroupId, label: 关键词组ID, type: Long, required: false }
+      - { name: userId, label: 用户ID, type: Long, required: false }
+      - { name: enabled, label: 是否启用, type: Integer, defaultValue: "1" }
+      - { name: intervalMinutes, label: 间隔(分钟), type: Integer, defaultValue: "60" }
+      - { name: startTime, label: 生效开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 生效结束时间, type: DateTime, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-CRAWL-TASK-001
+    name: 采集任务
+    alias: TrackCrawlTask
+    aggregateType: AGGREGATE_ROOT
+    description: 采集任务执行记录，含状态/计划时间/频率/文章数/错误信息/重试次数
+    lifecycle: [pending, running, success, failed]
+    tags: [监测域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: taskName, label: 任务名称, type: String, required: false }
+      - { name: sourceId, label: 采集源ID, type: Long, required: true }
+      - { name: subscriptionId, label: 订阅ID, type: Long, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [pending, running, success, failed], defaultValue: "pending" }
+      - { name: scheduledTime, label: 计划执行时间, type: DateTime, required: false }
+      - { name: crawlFrequency, label: 采集频率, type: String, required: false }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: articleCount, label: 采集文章数, type: Integer, defaultValue: "0" }
+      - { name: errorMsg, label: 错误信息, type: Text, required: false }
+      - { name: retryCount, label: 重试次数, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-KEYWORD-GROUP-001
+    name: 关键词组
+    alias: TrackCrawlKeywordGroup
+    aggregateType: AGGREGATE_ROOT
+    description: 采集关键词组，支持中/英/法/阿拉伯四语种关键词，含匹配模式
+    lifecycle: [启用, 停用]
+    tags: [监测域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: groupName, label: 组名称, type: String, required: true }
+      - { name: keywordsZh, label: 中文关键词, type: Text, required: false }
+      - { name: keywordsEn, label: 英文关键词, type: Text, required: false }
+      - { name: keywordsFr, label: 法文关键词, type: Text, required: false }
+      - { name: keywordsAr, label: 阿拉伯文关键词, type: Text, required: false }
+      - { name: matchMode, label: 匹配模式, type: Enum, enumValues: [any, all], defaultValue: "any" }
+      - { name: lang, label: 语种, type: String, required: false }
+      - { name: enabled, label: 是否启用, type: Integer, defaultValue: "1" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-DATA-IMPORT-001
+    name: 数据导入
+    alias: TrackDataImport
+    aggregateType: AGGREGATE_ROOT
+    description: 数据导入记录，含类型/文件路径/记录数/目标表/状态/错误行数
+    lifecycle: [pending, running, success, failed]
+    tags: [监测域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: importName, label: 导入名称, type: String, required: false }
+      - { name: importType, label: 导入类型, type: String, required: false }
+      - { name: filePath, label: 文件路径, type: String, required: false }
+      - { name: fileSize, label: 文件大小, type: Long, required: false }
+      - { name: recordCount, label: 记录数, type: Integer, defaultValue: "0" }
+      - { name: targetTable, label: 目标表, type: String, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [pending, running, success, failed], defaultValue: "pending" }
+      - { name: errorRows, label: 错误行数, type: Integer, defaultValue: "0" }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: errorLog, label: 错误日志, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-DATA-EXPORT-001
+    name: 数据导出
+    alias: TrackDataExport
+    aggregateType: AGGREGATE_ROOT
+    description: 数据导出记录，含类型/源表/筛选条件/文件路径/下载Token/过期时间
+    lifecycle: [pending, running, success, failed]
+    tags: [监测域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: exportName, label: 导出名称, type: String, required: false }
+      - { name: exportType, label: 导出类型, type: String, required: false }
+      - { name: sourceTable, label: 源表, type: String, required: false }
+      - { name: filterConditions, label: 筛选条件, type: Text, required: false }
+      - { name: filePath, label: 文件路径, type: String, required: false }
+      - { name: fileSize, label: 文件大小, type: Long, required: false }
+      - { name: recordCount, label: 记录数, type: Integer, defaultValue: "0" }
+      - { name: status, label: 状态, type: Enum, enumValues: [pending, running, success, failed], defaultValue: "pending" }
+      - { name: downloadToken, label: 下载Token, type: String, required: false }
+      - { name: expireTime, label: 过期时间, type: DateTime, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-KG-NODE-001
+    name: 个人图谱节点
+    alias: TrackKgNode
+    aggregateType: AGGREGATE_ROOT
+    description: 个人知识图谱节点，含节点类型/名称/关联本体实体/属性/权重/来源文章
+    lifecycle: [有效, 无效]
+    tags: [监测域, 个人层, 知识图谱]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: nodeId, label: 节点ID, type: String, required: false }
+      - { name: nodeType, label: 节点类型, type: String, required: false }
+      - { name: nodeName, label: 节点名称, type: String, required: true }
+      - { name: nodeNameZh, label: 中文名称, type: String, required: false }
+      - { name: ontologyEntityId, label: 关联本体实体ID, type: Long, required: false, description: "晋升后回填" }
+      - { name: properties, label: 属性JSON, type: Text, required: false }
+      - { name: weight, label: 权重, type: Float, defaultValue: "1.0" }
+      - { name: sourceArticleIds, label: 来源文章ID列表, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-KG-EDGE-001
+    name: 个人图谱边
+    alias: TrackKgEdge
+    aggregateType: AGGREGATE_ROOT
+    description: 个人知识图谱边，含源/目标节点/关系类型/属性/权重/证据文章
+    lifecycle: [有效, 无效]
+    tags: [监测域, 个人层, 知识图谱]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: sourceNodeId, label: 源节点ID, type: String, required: true }
+      - { name: targetNodeId, label: 目标节点ID, type: String, required: true }
+      - { name: relationType, label: 关系类型, type: String, required: false }
+      - { name: relationName, label: 关系名称, type: String, required: false }
+      - { name: properties, label: 属性JSON, type: Text, required: false }
+      - { name: weight, label: 权重, type: Float, defaultValue: "1.0" }
+      - { name: articleId, label: 证据文章ID, type: Long, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-KG-BUILD-LOG-001
+    name: 图谱构建日志
+    alias: TrackKgBuildLog
+    aggregateType: AGGREGATE_ROOT
+    description: 知识图谱构建日志，含主题/状态/节点数/边数/耗时/错误
+    lifecycle: [running, success, failed]
+    tags: [监测域, 个人层, 知识图谱]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: topicId, label: 主题ID, type: Long, required: false }
+      - { name: buildStatus, label: 构建状态, type: Enum, enumValues: [running, success, failed], defaultValue: "running" }
+      - { name: nodeCount, label: 节点数, type: Integer, defaultValue: "0" }
+      - { name: edgeCount, label: 边数, type: Integer, defaultValue: "0" }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: errorLog, label: 错误日志, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-TRK-NER-ELEMENT-001
+    name: NER要素
+    alias: TrackNerElement
+    aggregateType: AGGREGATE_ROOT
+    description: 文章NER要素抽取结果，含时间/地点/人物/事件/方式/原因六要素
+    lifecycle: [有效, 无效]
+    tags: [监测域, 个人层, NLP]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleId, label: 文章ID, type: Long, required: true }
+      - { name: elementWhen, label: 时间要素, type: String, required: false }
+      - { name: elementWhere, label: 地点要素, type: String, required: false }
+      - { name: elementWho, label: 人物要素, type: String, required: false }
+      - { name: elementWhat, label: 事件要素, type: String, required: false }
+      - { name: elementHow, label: 方式要素, type: String, required: false }
+      - { name: elementWhy, label: 原因要素, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  # ══════════════════════════════════════════════════════════
+  # 二、分析域 gwy_analyze_（7 实体，个人层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-ANZ-TOPIC-001
+    name: 追踪主题
+    alias: AnalyzeTrackTopic
+    aggregateType: AGGREGATE_ROOT
+    description: 追踪主题，含类型/关注区域/关键词组/采集源/告警规则/状态
+    lifecycle: [active, paused, closed]
+    tags: [分析域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: topicName, label: 主题名称, type: String, required: true }
+      - { name: topicType, label: 主题类型, type: String, required: false }
+      - { name: hotspotRegion, label: 关注区域, type: String, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: keywordGroupId, label: 关键词组ID, type: Long, required: false }
+      - { name: crawlSourceIds, label: 采集源ID列表, type: String, required: false }
+      - { name: alertRuleIds, label: 告警规则ID列表, type: String, required: false }
+      - { name: userId, label: 用户ID, type: Long, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [active, paused, closed], defaultValue: "active" }
+      - { name: alertEnabled, label: 是否启用告警, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+    entities:
+      - name: 主题要素
+        alias: AnalyzeTrackElement
+        description: 追踪主题的关键要素（六要素抽取）
+        localId: topicId
+        cardinality: ZERO_OR_MORE
+        cascadeDelete: true
+        attributes:
+          - { name: id, label: 主键, type: Long, required: true }
+          - { name: topicId, label: 主题ID, type: Long, required: true }
+          - { name: elementType, label: 要素类型, type: String, required: false }
+          - { name: elementValue, label: 要素值, type: String, required: false }
+          - { name: articleId, label: 文章ID, type: Long, required: false }
+          - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-ANZ-NLP-ENTITY-001
+    name: NLP实体识别
+    alias: AnalyzeNlpEntity
+    aggregateType: AGGREGATE_ROOT
+    description: NLP实体识别结果，含实体类型/值/位置/置信度
+    lifecycle: [有效, 无效]
+    tags: [分析域, 个人层, NLP]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleId, label: 文章ID, type: Long, required: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: entityValue, label: 实体值, type: String, required: false }
+      - { name: entityName, label: 实体名称, type: String, required: false }
+      - { name: startPos, label: 起始位置, type: Integer, required: false }
+      - { name: endPos, label: 结束位置, type: Integer, required: false }
+      - { name: confidence, label: 置信度, type: Float, required: false }
+      - { name: lang, label: 语种, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-ANZ-NLP-TRIPLE-001
+    name: NLP三元组
+    alias: AnalyzeNlpTriple
+    aggregateType: AGGREGATE_ROOT
+    description: NLP三元组抽取结果，含主语/谓词/宾语及类型/置信度
+    lifecycle: [有效, 无效]
+    tags: [分析域, 个人层, NLP]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleId, label: 文章ID, type: Long, required: true }
+      - { name: subject, label: 主语, type: String, required: false }
+      - { name: predicate, label: 谓词, type: String, required: false }
+      - { name: obj, label: 宾语, type: String, required: false }
+      - { name: subjectType, label: 主语类型, type: String, required: false }
+      - { name: objectType, label: 宾语类型, type: String, required: false }
+      - { name: confidence, label: 置信度, type: Float, required: false }
+      - { name: lang, label: 语种, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-ANZ-NLP-SENTIMENT-001
+    name: NLP情感分析
+    alias: AnalyzeNlpSentiment
+    aggregateType: AGGREGATE_ROOT
+    description: NLP情感分析结果，含情感/得分/置信度/正负面词
+    lifecycle: [有效, 无效]
+    tags: [分析域, 个人层, NLP]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: articleId, label: 文章ID, type: Long, required: true }
+      - { name: sentiment, label: 情感, type: String, required: false }
+      - { name: score, label: 得分, type: Float, required: false }
+      - { name: confidence, label: 置信度, type: Float, required: false }
+      - { name: positiveWords, label: 正面词, type: Text, required: false }
+      - { name: negativeWords, label: 负面词, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-ANZ-ALERT-RULE-001
+    name: 告警规则
+    alias: AnalyzeAlertRule
+    aggregateType: AGGREGATE_ROOT
+    description: 告警规则，含类型/条件配置/级别/渠道/目标
+    lifecycle: [启用, 停用]
+    tags: [分析域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: ruleName, label: 规则名称, type: String, required: true }
+      - { name: ruleType, label: 规则类型, type: Enum, enumValues: [keyword, sentiment, event], required: false }
+      - { name: conditionConfig, label: 条件配置JSON, type: Text, required: false }
+      - { name: alertLevel, label: 告警级别, type: String, required: false }
+      - { name: alertChannel, label: 告警渠道, type: String, required: false }
+      - { name: alertTarget, label: 告警目标, type: String, required: false }
+      - { name: enabled, label: 是否启用, type: Integer, defaultValue: "1" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-ANZ-NLP-VERSION-001
+    name: NLP模型版本
+    alias: AnalyzeNlpVersion
+    aggregateType: AGGREGATE_ROOT
+    description: NLP模型版本管理，含模型名/版本/类型/路径/准确率/精确率/召回率/F1/部署状态
+    lifecycle: [未部署, 已部署]
+    tags: [分析域, 个人层, NLP]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: modelName, label: 模型名称, type: String, required: true }
+      - { name: modelVersion, label: 模型版本, type: String, required: false }
+      - { name: modelType, label: 模型类型, type: String, required: false }
+      - { name: modelPath, label: 模型路径, type: String, required: false }
+      - { name: accuracy, label: 准确率, type: Float, required: false }
+      - { name: precisionVal, label: 精确率, type: Float, required: false }
+      - { name: recallVal, label: 召回率, type: Float, required: false }
+      - { name: f1Val, label: F1值, type: Float, required: false }
+      - { name: trainDataCount, label: 训练数据量, type: Integer, defaultValue: "0" }
+      - { name: deployed, label: 是否部署, type: Integer, defaultValue: "0" }
+      - { name: deployedTime, label: 部署时间, type: DateTime, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  # ══════════════════════════════════════════════════════════
+  # 三、展示域 gwy_display_（10 实体，个人层）
+  # ══════════════════════════════════════════════════════════
+  - id: AGG-DSP-RPT-TEMPLATE-001
+    name: 报告模板
+    alias: DisplayRptTemplate
+    aggregateType: AGGREGATE_ROOT
+    description: 报告模板，含类型/内容/默认参数/排序
+    lifecycle: [有效, 无效]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: templateName, label: 模板名称, type: String, required: true }
+      - { name: templateCode, label: 模板编码, type: String, required: false }
+      - { name: templateType, label: 模板类型, type: String, required: false }
+      - { name: templateContent, label: 模板内容, type: Text, required: false }
+      - { name: defaultParams, label: 默认参数JSON, type: Text, required: false }
+      - { name: sort, label: 排序, type: Integer, defaultValue: "0" }
+      - { name: status, label: 状态, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-RPT-REPORT-001
+    name: 报告记录
+    alias: DisplayRptReport
+    aggregateType: AGGREGATE_ROOT
+    description: 报告记录，含模板/主题/时间范围/内容/文件/可见范围
+    lifecycle: [draft, published, archived]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: reportName, label: 报告名称, type: String, required: true }
+      - { name: reportType, label: 报告类型, type: String, required: false }
+      - { name: templateId, label: 模板ID, type: Long, required: false }
+      - { name: topicId, label: 主题ID, type: Long, required: false }
+      - { name: userId, label: 用户ID, type: Long, required: false }
+      - { name: timeRangeStart, label: 时间范围开始, type: DateTime, required: false }
+      - { name: timeRangeEnd, label: 时间范围结束, type: DateTime, required: false }
+      - { name: params, label: 参数JSON, type: Text, required: false }
+      - { name: content, label: 内容, type: Text, required: false }
+      - { name: filePath, label: 文件路径, type: String, required: false }
+      - { name: fileSize, label: 文件大小, type: Long, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [draft, published, archived], defaultValue: "draft" }
+      - { name: viewCount, label: 查看次数, type: Integer, defaultValue: "0" }
+      - { name: scope, label: 可见范围, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-ALERT-RECORD-001
+    name: 告警记录
+    alias: DisplayAlertRecord
+    aggregateType: AGGREGATE_ROOT
+    description: 告警记录，含规则/级别/标题/内容/触发文章/状态/处理信息
+    lifecycle: [unread, read, resolved]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: ruleId, label: 规则ID, type: Long, required: false }
+      - { name: ruleName, label: 规则名称, type: String, required: false }
+      - { name: alertLevel, label: 告警级别, type: String, required: false }
+      - { name: alertTitle, label: 告警标题, type: String, required: false }
+      - { name: alertContent, label: 告警内容, type: Text, required: false }
+      - { name: triggerArticleId, label: 触发文章ID, type: Long, required: false }
+      - { name: triggerKeywords, label: 触发关键词, type: String, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [unread, read, resolved], defaultValue: "unread" }
+      - { name: resolvedBy, label: 处理人, type: Long, required: false }
+      - { name: resolvedTime, label: 处理时间, type: DateTime, required: false }
+      - { name: resolvedComment, label: 处理备注, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-INFO-PUBLISH-001
+    name: 信息发布
+    alias: DisplayInformationPublish
+    aggregateType: AGGREGATE_ROOT
+    description: 信息发布，含标题/类型/内容/作者/状态/发布时间/分类
+    lifecycle: [draft, published, archived]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: publishTitle, label: 发布标题, type: String, required: true }
+      - { name: publishType, label: 发布类型, type: String, required: false }
+      - { name: content, label: 内容, type: Text, required: false }
+      - { name: authorId, label: 作者ID, type: Long, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [draft, published, archived], defaultValue: "draft" }
+      - { name: publishTime, label: 发布时间, type: DateTime, required: false }
+      - { name: category, label: 分类, type: String, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-PUSH-RECORD-001
+    name: 推送记录
+    alias: DisplayPushRecord
+    aggregateType: AGGREGATE_ROOT
+    description: 推送记录，含类型/目标/文章/报告/标题/内容/状态/发送时间
+    lifecycle: [pending, success, failed]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: pushType, label: 推送类型, type: String, required: false }
+      - { name: pushTarget, label: 推送目标, type: String, required: false }
+      - { name: articleIds, label: 文章ID列表, type: String, required: false }
+      - { name: reportId, label: 报告ID, type: Long, required: false }
+      - { name: subject, label: 主题, type: String, required: false }
+      - { name: content, label: 内容, type: Text, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [pending, success, failed], defaultValue: "pending" }
+      - { name: sendTime, label: 发送时间, type: DateTime, required: false }
+      - { name: errorMsg, label: 错误信息, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-RECOMMEND-001
+    name: 推荐记录
+    alias: DisplayRecommendationRecord
+    aggregateType: AGGREGATE_ROOT
+    description: 推荐记录，含用户/类型/目标/标题/得分/理由/状态
+    lifecycle: [unread, read, adopted, dismissed]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: userId, label: 用户ID, type: Long, required: true }
+      - { name: recType, label: 推荐类型, type: String, required: false }
+      - { name: recTargetId, label: 推荐目标ID, type: Long, required: false }
+      - { name: recTitle, label: 推荐标题, type: String, required: false }
+      - { name: recScore, label: 推荐得分, type: Float, required: false }
+      - { name: recReason, label: 推荐理由, type: Text, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [unread, read, adopted, dismissed], defaultValue: "unread" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-SEARCH-INDEX-001
+    name: 搜索索引
+    alias: DisplaySearchIndex
+    aggregateType: AGGREGATE_ROOT
+    description: 搜索索引，含实体类型/ID/名称/关键词/索引数据
+    lifecycle: [有效, 无效]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: entityType, label: 实体类型, type: String, required: false }
+      - { name: entityId, label: 实体ID, type: Long, required: false }
+      - { name: entityName, label: 实体名称, type: String, required: false }
+      - { name: keywords, label: 关键词, type: Text, required: false }
+      - { name: lang, label: 语种, type: String, required: false }
+      - { name: indexData, label: 索引数据, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-CONFERENCE-001
+    name: 会议信息
+    alias: DisplayConferenceInfo
+    aggregateType: AGGREGATE_ROOT
+    description: 会议信息，含名称/时间/地点/主办方/参会人员/描述/状态
+    lifecycle: [upcoming, ongoing, ended, cancelled]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: conferenceName, label: 会议名称, type: String, required: true }
+      - { name: startTime, label: 开始时间, type: DateTime, required: false }
+      - { name: endTime, label: 结束时间, type: DateTime, required: false }
+      - { name: location, label: 地点, type: String, required: false }
+      - { name: organizer, label: 主办方, type: String, required: false }
+      - { name: participants, label: 参会人员, type: Text, required: false }
+      - { name: description, label: 描述, type: Text, required: false }
+      - { name: status, label: 状态, type: Enum, enumValues: [upcoming, ongoing, ended, cancelled], defaultValue: "upcoming" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-COLUMN-001
+    name: 栏目管理
+    alias: DisplayColumnManage
+    aggregateType: AGGREGATE_ROOT
+    description: 栏目管理，含名称/编码/关联表/可见/排序/配置
+    lifecycle: [可见, 隐藏]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: columnName, label: 栏目名称, type: String, required: true }
+      - { name: columnCode, label: 栏目编码, type: String, required: false }
+      - { name: tableName, label: 关联表, type: String, required: false }
+      - { name: visible, label: 是否可见, type: Integer, defaultValue: "1" }
+      - { name: sortOrder, label: 排序, type: Integer, defaultValue: "0" }
+      - { name: config, label: 配置JSON, type: Text, required: false }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }
+
+  - id: AGG-DSP-MODULE-CONFIG-001
+    name: 用户模块配置
+    alias: DisplayUserModuleConfig
+    aggregateType: AGGREGATE_ROOT
+    description: 用户模块配置，含模块编码/名称/配置数据/显示/排序
+    lifecycle: [显示, 隐藏]
+    tags: [展示域, 个人层]
+    attributes:
+      - { name: id, label: 主键, type: Long, required: true, unique: true }
+      - { name: userId, label: 用户ID, type: Long, required: true }
+      - { name: moduleCode, label: 模块编码, type: String, required: false }
+      - { name: moduleName, label: 模块名称, type: String, required: false }
+      - { name: configData, label: 配置数据JSON, type: Text, required: false }
+      - { name: isVisible, label: 是否显示, type: Integer, defaultValue: "1" }
+      - { name: sortOrder, label: 排序, type: Integer, defaultValue: "0" }
+      - { name: tenantId, label: 租户ID, type: Long, required: true }

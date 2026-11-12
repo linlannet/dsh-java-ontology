@@ -1,0 +1,111 @@
+# M7 报表模型元文件（产品层 base）- m7-report-model.yaml
+# 通用报表：本体搜索 + 统一知识图谱 + 全局汇聚统计
+model_type: REPORT
+version: "3.0"
+domain: "通用本体知识库平台"
+
+query_reports:
+  - id: REP-UNIFIED-KG
+    name: 统一知识图谱查询
+    alias: unifiedKg
+    objectType: DETAIL_QUERY
+    description: 主任查看统一层知识图谱（个人层 + 全局层 UNION）
+    behaviorRef: Global_QueryUnified
+    sourceObjects:
+      - { objectRef: AGG-TRK-KG-NODE-001, alias: personalNode, primary: true }
+      - { objectRef: AGG-GLB-KG-NODE-001, alias: globalNode, primary: false }
+      - { objectRef: AGG-TRK-KG-EDGE-001, alias: personalEdge, primary: false }
+      - { objectRef: AGG-GLB-KG-EDGE-001, alias: globalEdge, primary: false }
+    joins: []
+    parameters:
+      - { name: nodeType, label: 节点类型, dataType: String, required: false, allowedOperators: [EQ], sourceField: personalNode.nodeType }
+      - { name: tenantId, label: 租户ID, dataType: Long, required: false, allowedOperators: [EQ], sourceField: personalNode.tenantId }
+    conditions:
+      - { conditionId: C01, leftExpression: personalNode.nodeType, operator: EQ, parameterRef: nodeType, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C02, leftExpression: personalNode.tenantId, operator: EQ, parameterRef: tenantId, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+    resultColumns:
+      - { name: sourceLayer, label: 来源层, dataType: String, sourceExpression: "'PERSONAL' OR 'GLOBAL'", aggregateFunction: NONE }
+      - { name: nodeId, label: 节点ID, dataType: String, sourceExpression: personalNode.nodeId, aggregateFunction: NONE }
+      - { name: nodeType, label: 节点类型, dataType: String, sourceExpression: personalNode.nodeType, aggregateFunction: NONE }
+      - { name: nodeName, label: 节点名称, dataType: String, sourceExpression: personalNode.nodeName, aggregateFunction: NONE }
+      - { name: weight, label: 权重, dataType: Float, sourceExpression: personalNode.weight, aggregateFunction: NONE }
+    groupBy: []
+    having: []
+    orderBy: []
+    pagination: { enabled: true, defaultPageSize: 50, maxPageSize: 500 }
+    reportOptions: null
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # REP-06 本体搜索查询（LIST_QUERY）
+  # ══════════════════════════════════════════════════════════
+  - id: REP-ONT-SEARCH
+    name: 本体搜索查询
+    alias: ontologySearch
+    objectType: LIST_QUERY
+    description: 按类别/名称/语种搜索本体实体（含 i18n 翻译）
+    behaviorRef: Ontology_query
+    sourceObjects:
+      - { objectRef: AGG-ONT-ENTITY-001, alias: entity, primary: true }
+      - { objectRef: AGG-ONT-I18N-001, alias: i18n, primary: false }
+    joins:
+      - { joinId: J01, joinType: LEFT, leftSource: entity, rightSource: i18n, conditionExpression: "i18n.entityId == entity.id AND i18n.category == entity.category" }
+    parameters:
+      - { name: category, label: 类别, dataType: String, required: false, allowedOperators: [EQ], sourceField: entity.category }
+      - { name: entityName, label: 实体名称, dataType: String, required: false, allowedOperators: [LIKE], sourceField: entity.entityName }
+      - { name: lang, label: 语种, dataType: String, required: false, allowedOperators: [EQ], sourceField: i18n.lang }
+    conditions:
+      - { conditionId: C01, leftExpression: entity.category, operator: EQ, parameterRef: category, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C02, leftExpression: entity.entityName, operator: LIKE, parameterRef: entityName, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C03, leftExpression: i18n.lang, operator: EQ, parameterRef: lang, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+    resultColumns:
+      - { name: id, label: 实体ID, dataType: Long, sourceExpression: entity.id, aggregateFunction: NONE }
+      - { name: category, label: 类别, dataType: String, sourceExpression: entity.category, aggregateFunction: NONE }
+      - { name: entityName, label: 实体名称, dataType: String, sourceExpression: entity.entityName, aggregateFunction: NONE }
+      - { name: description, label: 描述, dataType: String, sourceExpression: entity.description, aggregateFunction: NONE }
+      - { name: i18nName, label: 翻译名称, dataType: String, sourceExpression: i18n.name, aggregateFunction: NONE }
+      - { name: lang, label: 语种, dataType: String, sourceExpression: entity.lang, aggregateFunction: NONE }
+    groupBy: []
+    having: []
+    orderBy:
+      - { expression: entity.entityName, direction: ASC }
+    pagination: { enabled: true, defaultPageSize: 20, maxPageSize: 100 }
+    reportOptions: null
+    version: "1.0"
+
+  # ══════════════════════════════════════════════════════════
+  # REP-07 全局汇聚统计报表（REPORT，主任专属）
+  # ══════════════════════════════════════════════════════════
+  - id: REP-GLOBAL-AGG-SUMMARY
+    name: 全局汇聚统计报表
+    alias: globalAggSummary
+    objectType: REPORT
+    description: 按汇聚类型汇总全局实体数/关系数/图谱规模/耗时
+    behaviorRef: Global_QueryUnified
+    sourceObjects:
+      - { objectRef: AGG-GLB-AGG-LOG-001, alias: aggLog, primary: true }
+      - { objectRef: AGG-GLB-DISCOVERED-ENTITY-001, alias: globalEntity, primary: false }
+      - { objectRef: AGG-GLB-BILATERAL-001, alias: globalRelation, primary: false }
+      - { objectRef: AGG-GLB-KG-NODE-001, alias: globalKgNode, primary: false }
+    joins: []
+    parameters:
+      - { name: aggregationType, label: 汇聚类型, dataType: String, required: false, allowedOperators: [EQ], sourceField: aggLog.aggregationType }
+      - { name: status, label: 状态, dataType: String, required: false, allowedOperators: [EQ], sourceField: aggLog.status }
+    conditions:
+      - { conditionId: C01, leftExpression: aggLog.aggregationType, operator: EQ, parameterRef: aggregationType, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+      - { conditionId: C02, leftExpression: aggLog.status, operator: EQ, parameterRef: status, logicalConnector: AND, group: BASE, skipWhenParameterEmpty: true }
+    resultColumns:
+      - { name: aggregationType, label: 汇聚类型, dataType: String, sourceExpression: aggLog.aggregationType, aggregateFunction: NONE }
+      - { name: entityCount, label: 实体数量, dataType: Integer, sourceExpression: aggLog.entityCount, aggregateFunction: SUM }
+      - { name: relationCount, label: 关系数量, dataType: Integer, sourceExpression: aggLog.relationCount, aggregateFunction: SUM }
+      - { name: totalDuration, label: 总耗时毫秒, dataType: Long, sourceExpression: aggLog.durationMs, aggregateFunction: SUM }
+      - { name: globalEntityCount, label: 全局实体总数, dataType: Integer, sourceExpression: globalEntity.id, aggregateFunction: COUNT }
+      - { name: globalRelationCount, label: 全局关系总数, dataType: Integer, sourceExpression: globalRelation.id, aggregateFunction: COUNT }
+      - { name: globalKgNodeCount, label: 全局图谱节点数, dataType: Integer, sourceExpression: globalKgNode.id, aggregateFunction: COUNT }
+    groupBy: [aggLog.aggregationType]
+    having: []
+    orderBy:
+      - { expression: aggLog.createTime, direction: DESC }
+    pagination: { enabled: true, defaultPageSize: 20, maxPageSize: 100 }
+    reportOptions: null
+    version: "1.0"

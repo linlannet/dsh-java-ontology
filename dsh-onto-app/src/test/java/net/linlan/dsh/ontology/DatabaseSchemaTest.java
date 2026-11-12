@@ -37,33 +37,28 @@ class DatabaseSchemaTest {
 
         String[] expectedTables = {
             "onto_sys_user",
-            "onto_ontology_version", "onto_ontology_entity", "gwy_ontology_country",
-            "gwy_ontology_organization", "gwy_ontology_person", "gwy_ontology_hotspot",
-            "onto_ontology_term", "onto_ontology_event_type", "onto_ontology_location",
-            "gwy_ontology_media", "gwy_ontology_book", "gwy_ontology_paper",
-            "gwy_ontology_bilateral_relation", "onto_ontology_i18n",
-            "gwy_track_article", "gwy_track_crawl_source", "gwy_track_crawl_subscription",
-            "gwy_track_crawl_task", "gwy_track_crawl_keyword_group", "gwy_track_data_import",
-            "gwy_track_data_export", "gwy_track_kg_node", "gwy_track_kg_edge",
-            "gwy_track_kg_build_log", "gwy_track_ner_element",
-            "gwy_analyze_track_topic", "gwy_analyze_track_element", "gwy_analyze_nlp_entity",
-            "gwy_analyze_nlp_triple", "gwy_analyze_nlp_sentiment", "gwy_analyze_alert_rule",
-            "gwy_analyze_nlp_version",
-            "gwy_display_rpt_template", "gwy_display_rpt_report", "gwy_display_alert_record",
-            "gwy_display_information_publish", "gwy_display_push_record",
-            "gwy_display_recommendation_record", "gwy_display_search_index",
-            "gwy_display_conference_info", "gwy_display_column_manage",
-            "gwy_display_user_module_config",
+            "onto_ontology_version", "onto_ontology_entity", "onto_ontology_attribute",
+            "onto_ontology_term", "onto_ontology_event_type", "onto_ontology_location", "onto_ontology_i18n",
+            // 方案 A 后仅保留项目分析所需的 4 张表（V1.0.7 已统一改为 onto_ 前缀）
+            "onto_track_article", "onto_track_kg_node", "onto_track_kg_edge", "onto_analyze_track_topic",
             "onto_common_discovered_entity", "onto_common_tenant_relation_asset",
             "onto_common_personal_vector_index", "onto_common_llm_chat_history",
             "onto_global_discovered_entity", "onto_global_bilateral_relation",
-            "onto_global_kg_node", "onto_global_kg_edge", "onto_global_aggregation_log"
+            "onto_global_kg_node", "onto_global_kg_edge", "onto_global_aggregation_log",
+            // D-R1：R 域平台层补建（V1.0.3）
+            "onto_report_alert_record", "onto_report_information_publish",
+            "onto_report_push_record", "onto_report_recommendation_record",
+            "onto_report_search_index",
+            // 平台层指标（dsh-onto-metric 的 V1.0.2）
+            "onto_metric_business_object", "onto_metric_process",
+            "onto_metric_decision_point", "onto_metric_definition",
+            "onto_metric_dependency"
         };
 
         for (String expected : expectedTables) {
             assertTrue(tables.contains(expected), "Missing table: " + expected);
         }
-        assertEquals(52, expectedTables.length, "Expected 52 tables");
+        assertEquals(31, expectedTables.length, "Expected 31 tables");
     }
 
     @Test

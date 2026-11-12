@@ -1,0 +1,59 @@
+# SIIS 主体模型元文件（项目层）- siis-actor.yaml
+# SIIS 业务特定权限：监测/分析/展示域权限
+model_type: ACTOR
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+permissions:
+  # ══════════════════════════════════════════════════════════
+  # 监测域 + 分析域 + 展示域权限（SIIS 项目层）
+  # ══════════════════════════════════════════════════════════
+
+  - permissionId: PERM-TRACK-CREATE
+    targetType: BEHAVIOR
+    targetRef: CrawlSource_Create
+    dataScope: TENANT
+    abacCondition: "actor.tenantId == resource.tenantId"
+  - permissionId: PERM-TRACK-QUERY
+    targetType: BEHAVIOR
+    targetRef: Track_QueryList
+    dataScope: TENANT
+    abacCondition: "actor.tenantId == resource.tenantId OR actor.roleLevel == 0"
+  - permissionId: PERM-TRACK-KG-BUILD
+    targetType: BEHAVIOR
+    targetRef: Kg_Build
+    dataScope: TENANT
+    abacCondition: "actor.tenantId == resource.tenantId"
+
+  # ══════════════════════════════════════════════════════════
+  # 分析域权限
+  # ══════════════════════════════════════════════════════════
+  - permissionId: PERM-ANALYZE-CREATE
+    targetType: BEHAVIOR
+    targetRef: Topic_Create
+    dataScope: TENANT
+    abacCondition: "actor.tenantId == resource.tenantId"
+  - permissionId: PERM-ANALYZE-QUERY
+    targetType: BEHAVIOR
+    targetRef: Analyze_QueryTopic
+    dataScope: TENANT
+    abacCondition: "actor.tenantId == resource.tenantId OR actor.roleLevel == 0"
+
+  # ══════════════════════════════════════════════════════════
+  # 展示域权限
+  # ══════════════════════════════════════════════════════════
+  - permissionId: PERM-DISPLAY-REPORT
+    targetType: BEHAVIOR
+    targetRef: Report_Generate
+    dataScope: TENANT
+    abacCondition: "actor.tenantId == resource.tenantId"
+  - permissionId: PERM-DISPLAY-QUERY
+    targetType: BEHAVIOR
+    targetRef: Display_QueryReport
+    dataScope: TENANT
+    abacCondition: "actor.tenantId == resource.tenantId OR actor.roleLevel == 0"
+
+  # ══════════════════════════════════════════════════════════
+  # 全局汇聚域权限（主任专属）
+  # ══════════════════════════════════════════════════════════

@@ -1,0 +1,55 @@
+# dsh-java-ontology — 本体知识工程平台（Java）
+
+> base + flow + 领域能力包三层架构；聚合应用监听 8100，输出 3 个 Harness 工具；配套 SIIS 工程提供四域业务与 12 个业务工具。
+> 分层定位：WorkBuddy 对标（dsh-java / DSH-Desktop）下游资源服务；身份/租户由 linlan-emis（BuddyOne，Java backend + Python py-api）签发，本平台 0.3.0 起作为 OAuth2 Resource Server（JWKS 验签）。
+
+Key capabilities:
+- 本体库管理、概念查询、模糊搜索
+- AI 对话助手（流式，经 dsh-java 8090）
+- 多租户 JWT + BCrypt（过渡态）；0.3.0 起改为验签 linlan-emis token，主任/研究员/访客三级角色不变
+- 工作流编排、全局知识聚合（个人→公共→全局）
+- 问数报告（qa）、可视化（viz）、指标建模（metric）
+- Harness 插件：workspace_overview / knowledge_aggregate / director_overview
+
+Tech stack: Java 17, Spring Boot 3.5.16, MyBatis, Flyway, MySQL 8, Maven
+Version: 0.2.2
+Repository: git@github-linlannet:linlannet/dsh-java-ontology.git
+
+Build / Test:
+- Build platform: `mvn -pl dsh-onto-app -am package -DskipTests`
+- Test:           `mvn -pl dsh-onto-base,dsh-onto-app -am test`
+- Run:            `java -jar dsh-onto-app/target/dsh-onto-app-0.2.2-exec.jar`
+- Dev run:        `mvn spring-boot:run -pl dsh-onto-app`
+
+Runtime:
+- Platform port: 8100
+- Default DB:    `dsh_java_ontodb` (`DB_HOST` / `DB_PORT` / `DB_NAME`; legacy `ontology_db` deprecated)
+- Harness:       `http://127.0.0.1:8090` (`DSH_HARNESS_BASE_URL`)
+- JWT:           `JWT_SECRET` (transition); 0.3.0 → JWKS via linlan-emis issuer
+- Query limits:  15 s timeout, max 100 results
+
+Module map:
+- dsh-onto-base      static ontology, rules, common infra, plugin base, ontology-models YAML
+- dsh-onto-flow      dynamic ontology, auth, workspace, global aggregation
+- dsh-onto-qa        reports and Q&A
+- dsh-onto-viz       visualization static assets
+- dsh-onto-metric    metric modeling + dependency tree (Flyway V1.0.2)
+- dsh-onto-app       aggregation app (port 8100, Flyway V1.0.0~V1.0.1)
+- dsh-onto-plugin    3-tool Harness plugin
+- agents/            3 Agent configs
+- skills/            4 Skill packs
+- docs/              0.2.1 specs, 0.2.2 designs, contract, dev-ops
+- dsh-ontolab-siis/  companion SIIS project (gitignored)
+
+Data:
+- 38 `onto_*` tables across 7 prefixes
+- 16 test classes / 110 test methods (base 6/44, app 10/66)
+
+Docs:
+- README.md / README.en.md
+- AGENTS.md
+- CHANGELOG.md
+- docs/0.2.1/ / docs/0.2.2/
+- docs/0.3.0/auth-tenant-design.md (linlan-emis = IdP, this platform = Resource Server)
+- docs/contract/permissions.yaml
+- dsh-ontolab-siis/README.md

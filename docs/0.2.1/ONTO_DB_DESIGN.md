@@ -1,15 +1,18 @@
 # DSH Onto 底层数据库设计文档
 
-> 数据库：`ontology_db`（底层共享）
+> 数据库：`dsh_java_ontodb`（底层共享；早期文档中的 `ontology_db` 为旧占位名）
 > 数据库版本：MySQL 8.0
-> 文档版本：v0.2.1
-> 更新：2026-10-18
-> 共 **32 张表**（sys 1 + common 4 + global 5 + ingestion 6 + report 7 + ontology 9）
-> 另含 **2 个统一层视图**（v_unified_monitor、v_unified_kg）
+> 文档版本：v0.2.2
+> 更新：2026-11-10
+> 共 **46 张表**（sys 4 + common 6 + notify 2 + global 5 + report 12 + metric 5 + ontology 8 + 项目分析 4）
+> 统一层视图（v_unified_monitor、v_unified_kg）已迁至 `dsh_java_siisdb`，本库不再包含视图
 
-> **说明**：本文档只包含底层（base/flow/report）的表结构，全部采用 `onto_` 前缀。
+> **说明**：本文档只包含底层（base/flow/report/metric）的表结构，全部采用 `onto_` 前缀。
 > SIIS 项目层表（`gwy_` 前缀）见 `dsh-ontolab-siis/docs/DB-DESIGN.md`。
-> v0.2.1 新增 `onto_ontology_*`（8 张）：6 张从 SIIS 迁移至产品层（加 `domain` 列支持多业务方向），2 张全新（动态属性 + 通用关系）。
+> 方案 A + V1.0.7 后本库业务表全部以 `onto_` 开头：
+> 8 类业务实体归并为 `onto_ontology_entity` + `onto_ontology_attribute`（EAV），原 8 张 `gwy_ontology_*` 与 2 张 `gwy_display_*` 已删除；
+> 4 张项目分析表由 `gwy_` 改名为 `onto_track_article` / `onto_track_kg_node` / `onto_track_kg_edge` / `onto_analyze_track_topic`；
+> `onto_ontology_relation` 无业务引用，已于 V1.0.6 删除。
 
 ---
 
@@ -17,16 +20,19 @@
 
 | 前缀 | 含义 | 所属层 | 模块 | tenant_id | 表数 |
 |------|------|--------|------|-----------|------|
-| `onto_sys_` | 认证授权 | flow | sys | NULL | 1 |
-| `onto_common_` | 知识沉淀（个人层） | flow | common | 必填 | 4 |
+| `onto_sys_` | 认证授权 | flow | sys | NULL | 4 |
+| `onto_common_` | 知识沉淀（个人层） | flow | common | 必填 | 6 |
+| `onto_notify_` | 通知订阅与消息（个人层） | flow | notify | 必填 | 2 |
 | `onto_global_` | 全局汇聚（共享层） | flow | global | NULL | 5 |
-| `onto_ingestion_` | 通用数据摄取 | flow | ingestion | 必填 | 6 |
-| `onto_report_` | 报告+问数+分析 | report | report | 必填 | 7 |
-| `onto_ontology_` | 本体元数据（多业务方向） | base | ontology | NULL | 9 |
+| `onto_report_` | 报告+问数+分析+发布 | report | report | 必填 | 12 |
+| `onto_metric_` | 指标建模与依赖树 | metric | metric | 必填 | 5 |
+| `onto_ontology_` | 本体元数据（多业务方向，EAV） | base | ontology | NULL | 8 |
+| `onto_track_` | 信息监测（项目分析，个人层） | flow | track | 必填 | 3 |
+| `onto_analyze_` | 信息分析主题（个人层） | flow | analyze | 必填 | 1 |
 
-- **已建表**：26 张（sys 1 + common 4 + global 5 + report 7 + ontology 9）
-- **设计中**：6 张（ingestion 6）
-- **合计**：32 张
+- **已建表**：46 张（sys 4 + common 6 + notify 2 + global 5 + report 12 + metric 5 + ontology 8 + track 3 + analyze 1）
+- **设计中**：0 张（原 `onto_ingestion_*` 6 张未落地，按实际库现状不计入）
+- **合计**：46 张（与 `docs/dev-ops/dsh_java_ontodb.sql` 一致）
 
 ---
 
@@ -383,7 +389,11 @@
 
 ---
 
-## 五、报告+问数+分析 onto_report_（7 张，report）
+## 五、报告+问数+分析 onto_report_（12 张，report）
+
+> 除下述 7 张基础表外，V1.0.3 报告扩展表 5 张：`onto_report_alert_record`（告警记录）、
+> `onto_report_information_publish`（信息发布）、`onto_report_push_record`（推送记录）、
+> `onto_report_recommendation_record`（推荐记录）、`onto_report_search_index`（检索索引）。
 
 ### 17. onto_report_template（报告模板表）
 
@@ -480,11 +490,13 @@
 
 ---
 
-## 六、本体元数据 onto_ontology_（9 张，base/ontology，共享层）
+## 六、本体元数据 onto_ontology_（8 张，base/ontology，共享层）
 
 > v0.2.1 从 SIIS 项目层迁移至产品层 base 模块，通过 `domain` 列（siis/factory/ecommerce/city-ops）支持多业务方向隔离。
-> 6 张迁移表（version/entity/term/event_type/location/i18n）+ 2 张新增表（attribute/relation）。
-> SIIS 项目层保留业务特定本体表（country/organization/person/hotspot/media/book/paper/bilateral_relation），见 SIIS DB-DESIGN.md。
+> 6 张迁移表（version/entity/term/event_type/location/i18n）+ 2 张新增表（attribute/type）。
+> 原 `onto_ontology_relation` 已于 V1.0.6 删除（无引用）。
+> SIIS 项目层 8 张 `gwy_ontology_*` 保留作项目层分析存量源，启动时由 `OntologyEavMigrationRunner` 幂等搬入本层 EAV。
+> 方案 A 后所有本体实体统一存 `onto_ontology_entity`（`category` 区分 8 类）+ `onto_ontology_attribute`（EAV）。
 
 ### 24. onto_ontology_version（本体版本记录）
 
@@ -586,20 +598,9 @@
 | domain | VARCHAR(50) NOT NULL DEFAULT 'siis' | 业务方向 |
 | + 公共字段 | | KEY(entity_id, domain) |
 
-### 31. onto_ontology_relation（通用本体关系表，新增）
+### 31. onto_ontology_relation（已删除）
 
-> v0.2.1 新增。替代业务特定的双边关系表，支持多业务方向的通用关系建模。
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | BIGINT PK AUTO_INCREMENT | 主键 |
-| subject_entity_id | BIGINT | 主体实体ID |
-| object_entity_id | BIGINT | 客体实体ID |
-| relation_type | VARCHAR(50) | 关系类型: bilateral/supply/contain/manage |
-| relation_level | VARCHAR(50) | 关系级别 |
-| description | TEXT | 描述 |
-| domain | VARCHAR(50) NOT NULL DEFAULT 'siis' | 业务方向 |
-| + 公共字段 | | KEY(subject_entity_id, relation_type), KEY(object_entity_id, relation_type) |
+> V1.0.1 新增，V1.0.6 删除。全仓零引用（双边关系已由 `onto_ontology_entity(category=bilateralRelation)` + 属性 EAV 承载），当前库中不存在该表。
 
 ### 32. onto_ontology_type（本体类型元数据注册表，新增）
 
@@ -624,15 +625,46 @@
 
 ---
 
+## 六补、指标建模 onto_metric_（5 张，metric）
+
+> Flyway `V1.0.2__metric_tables.sql` 建表，随 `dsh-onto-metric` 模块提供指标建模与依赖树能力。
+
+| # | 表名 | 说明 |
+|---|------|------|
+| 33 | onto_metric_business_object | 业务对象 |
+| 34 | onto_metric_process | 业务流程 |
+| 35 | onto_metric_decision_point | 决策点 |
+| 36 | onto_metric_definition | 指标定义 |
+| 37 | onto_metric_dependency | 指标依赖关系 |
+
+---
+
+## 六补二、项目分析 onto_track_ / onto_analyze_（4 张）
+
+> 原 SIIS 项目层 4 张 `gwy_` 表，V1.0.7 改名为 `onto_` 前缀，随平台库统一管理；
+> SIIS 库已由 `V1.0.9__rename_track_tables_to_onto.sql` 同步改名（`v_unified_monitor` / `v_unified_kg` 随之重建），
+> 使 `dsh-onto-flow` 的共享代码（`KnowledgeAggregator` / `AggregationService` / `WorklineOrchestrator`）在单库模式下可直接查询；
+> 字段明细沿用 SIIS `docs/DB-DESIGN.md` 对应章节（仅表名换前缀）。
+
+| # | 表名 | 原表名 | 说明 |
+|---|------|--------|------|
+| 38 | onto_track_article | gwy_track_article | 监测文章 |
+| 39 | onto_track_kg_node | gwy_track_kg_node | 个人知识图谱节点 |
+| 40 | onto_track_kg_edge | gwy_track_kg_edge | 个人知识图谱边 |
+| 41 | onto_analyze_track_topic | gwy_analyze_track_topic | 追踪主题 |
+
+---
+
 ## 七、统一层视图（2 个）
 
 ### v_unified_monitor（跨租户主题监测聚合视图）
 
-> 依赖 SIIS 表（gwy_analyze_track_topic + gwy_track_article + gwy_display_alert_record），定义在 SIIS schema 中。
+> 已迁至 SIIS 库 `dsh_java_siisdb`（V1.0.4 重构），依赖 `gwy_analyze_track_topic` + `gwy_track_article` + `gwy_display_alert_record`。
 
 ### v_unified_kg（跨租户知识图谱聚合视图）
 
-> 跨 SIIS/flow 层：gwy_track_kg_node（个人层）+ onto_global_kg_node（共享层）。
+> 已迁至 SIIS 库 `dsh_java_siisdb`；跨个人层 `gwy_track_kg_node` 与共享层 `onto_global_kg_node`。
+> 平台侧对应能力改由 `AggregationService#getUnifiedKg` 应用层聚合实现。
 
 ---
 
@@ -641,36 +673,52 @@
 | # | 表名 | 所属层 | 模块 | 状态 |
 |---|------|--------|------|------|
 | 1 | onto_sys_user | flow | sys | ✅ 已建 |
-| 2 | onto_common_discovered_entity | flow | common | ✅ 已建 |
-| 3 | onto_common_tenant_relation_asset | flow | common | ✅ 已建 |
-| 4 | onto_common_personal_vector_index | flow | common | ✅ 已建 |
-| 5 | onto_common_llm_chat_history | flow | common | ✅ 已建 |
-| 6 | onto_global_discovered_entity | flow | global | ✅ 已建 |
-| 7 | onto_global_bilateral_relation | flow | global | ✅ 已建 |
-| 8 | onto_global_kg_node | flow | global | ✅ 已建 |
-| 9 | onto_global_kg_edge | flow | global | ✅ 已建 |
-| 10 | onto_global_aggregation_log | flow | global | ✅ 已建 |
-| 11 | onto_ingestion_source | flow | ingestion | 📋 设计中 |
-| 12 | onto_ingestion_mcp_service | flow | ingestion | 📋 设计中 |
-| 13 | onto_ingestion_mcp_tool | flow | ingestion | 📋 设计中 |
-| 14 | onto_ingestion_data_import | flow | ingestion | 📋 设计中 |
-| 15 | onto_ingestion_data_export | flow | ingestion | 📋 设计中 |
-| 16 | onto_ingestion_record | flow | ingestion | 📋 设计中 |
-| 17 | onto_report_template | report | report | ✅ 已建 |
-| 18 | onto_report_instance | report | report | ✅ 已建 |
-| 19 | onto_report_section | report | report | ✅ 已建 |
-| 20 | onto_report_chart_def | report | report | ✅ 已建 |
-| 21 | onto_report_qa_session | report | report | ✅ 已建 |
-| 22 | onto_report_qa_query | report | report | ✅ 已建 |
-| 23 | onto_report_analysis_task | report | report | ✅ 已建 |
-| 24 | onto_ontology_version | base | ontology | ✅ 已建（迁移） |
-| 25 | onto_ontology_entity | base | ontology | ✅ 已建（迁移） |
-| 26 | onto_ontology_term | base | ontology | ✅ 已建（迁移） |
-| 27 | onto_ontology_event_type | base | ontology | ✅ 已建（迁移） |
-| 28 | onto_ontology_location | base | ontology | ✅ 已建（迁移） |
-| 29 | onto_ontology_i18n | base | ontology | ✅ 已建（迁移） |
-| 30 | onto_ontology_attribute | base | ontology | ✅ 已建（新增） |
-| 31 | onto_ontology_relation | base | ontology | ✅ 已建（新增） |
-| 32 | onto_ontology_type | base | ontology | ✅ 已建（新增，ADR-001） |
+| 2 | onto_sys_role | flow | sys | ✅ 已建 |
+| 3 | onto_sys_user_role | flow | sys | ✅ 已建 |
+| 4 | onto_sys_audit_log | flow | sys | ✅ 已建 |
+| 5 | onto_common_discovered_entity | flow | common | ✅ 已建 |
+| 6 | onto_common_tenant_relation_asset | flow | common | ✅ 已建 |
+| 7 | onto_common_personal_vector_index | flow | common | ✅ 已建 |
+| 8 | onto_common_llm_chat_history | flow | common | ✅ 已建 |
+| 9 | onto_common_file | flow | common | ✅ 已建 |
+| 10 | onto_common_merge_log | flow | common | ✅ 已建 |
+| 11 | onto_notify_subscription | flow | notify | ✅ 已建 |
+| 12 | onto_notify_message | flow | notify | ✅ 已建 |
+| 13 | onto_global_discovered_entity | flow | global | ✅ 已建 |
+| 14 | onto_global_bilateral_relation | flow | global | ✅ 已建 |
+| 15 | onto_global_kg_node | flow | global | ✅ 已建 |
+| 16 | onto_global_kg_edge | flow | global | ✅ 已建 |
+| 17 | onto_global_aggregation_log | flow | global | ✅ 已建 |
+| 18 | onto_report_template | report | report | ✅ 已建 |
+| 19 | onto_report_instance | report | report | ✅ 已建 |
+| 20 | onto_report_section | report | report | ✅ 已建 |
+| 21 | onto_report_chart_def | report | report | ✅ 已建 |
+| 22 | onto_report_qa_session | report | report | ✅ 已建 |
+| 23 | onto_report_qa_query | report | report | ✅ 已建 |
+| 24 | onto_report_analysis_task | report | report | ✅ 已建 |
+| 25 | onto_report_alert_record | report | report | ✅ 已建（V1.0.3） |
+| 26 | onto_report_information_publish | report | report | ✅ 已建（V1.0.3） |
+| 27 | onto_report_push_record | report | report | ✅ 已建（V1.0.3） |
+| 28 | onto_report_recommendation_record | report | report | ✅ 已建（V1.0.3） |
+| 29 | onto_report_search_index | report | report | ✅ 已建（V1.0.3） |
+| 30 | onto_metric_business_object | metric | metric | ✅ 已建（V1.0.2） |
+| 31 | onto_metric_process | metric | metric | ✅ 已建（V1.0.2） |
+| 32 | onto_metric_decision_point | metric | metric | ✅ 已建（V1.0.2） |
+| 33 | onto_metric_definition | metric | metric | ✅ 已建（V1.0.2） |
+| 34 | onto_metric_dependency | metric | metric | ✅ 已建（V1.0.2） |
+| 35 | onto_ontology_version | base | ontology | ✅ 已建（迁移） |
+| 36 | onto_ontology_entity | base | ontology | ✅ 已建（迁移，EAV） |
+| 37 | onto_ontology_term | base | ontology | ✅ 已建（迁移） |
+| 38 | onto_ontology_event_type | base | ontology | ✅ 已建（迁移） |
+| 39 | onto_ontology_location | base | ontology | ✅ 已建（迁移） |
+| 40 | onto_ontology_i18n | base | ontology | ✅ 已建（迁移） |
+| 41 | onto_ontology_attribute | base | ontology | ✅ 已建（EAV） |
+| 42 | onto_ontology_type | base | ontology | ✅ 已建（ADR-001） |
+| 43 | onto_track_article | flow | track | ✅ 已建（V1.0.7 改名） |
+| 44 | onto_track_kg_node | flow | track | ✅ 已建（V1.0.7 改名） |
+| 45 | onto_track_kg_edge | flow | track | ✅ 已建（V1.0.7 改名） |
+| 46 | onto_analyze_track_topic | flow | analyze | ✅ 已建（V1.0.7 改名） |
 
-**合计：32 张表**（已建 26 + 设计中 6）+ 2 视图
+**合计：46 张表**（全部已建，全部 `onto_` 前缀）
+> 已删除：`onto_ontology_relation`（V1.0.6）、8 张 `gwy_ontology_*` 与 2 张 `gwy_display_*`（V1.0.5 迁移后删除）。
+> 设计稿未落地：`onto_ingestion_*` 6 张（不计入实际表数）。

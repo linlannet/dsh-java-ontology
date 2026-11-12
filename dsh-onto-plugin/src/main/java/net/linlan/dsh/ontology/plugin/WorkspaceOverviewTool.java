@@ -18,10 +18,10 @@ public class WorkspaceOverviewTool extends BaseOntologyTool {
     public WorkspaceOverviewTool(AdminApiClient client) { super(client); }
 
     @Override public String name() { return "workspace_overview"; }
-    @Override public String description() { return "查询研究员工作空间概览数据，包括研究概览、知识沉淀、收藏主题等。返回概览 JSON。"; }
+    @Override public String description() { return "查询工作空间分页数据，支持 discoveredEntity/tenantRelationAsset/llmChatHistory/personalVectorIndex 四类。返回分页 JSON。"; }
     @Override public Map<String, Object> parameters() {
         return objectSchema()
-                .prop("category", stringSchema("可选，分类过滤，如 researchOverview/knowledgePrecipitation"))
+                .prop("category", stringSchema("可选，分类过滤：discoveredEntity（默认）/tenantRelationAsset/llmChatHistory/personalVectorIndex"))
                 .prop("pageNum", integerSchema("页码，默认 1"))
                 .prop("pageSize", integerSchema("每页条数，默认 20"))
                 .prop("adminBaseUrl", stringSchema("可选，Admin API 地址"))
@@ -31,7 +31,7 @@ public class WorkspaceOverviewTool extends BaseOntologyTool {
     @Override public boolean isConcurrencySafe(Object args) { return true; }
     @Override
     protected CompletableFuture<ToolExecutionResult> run(Map<String, Object> args, ToolRunContext ctx) {
-        String category = str(args, "category", "researchOverview");
+        String category = str(args, "category", "discoveredEntity");
         int pageNum = intVal(args, "pageNum", 1);
         int pageSize = intVal(args, "pageSize", 20);
         String path = "/api/workspace/" + category + "/page?pageNum=" + pageNum + "&pageSize=" + pageSize;

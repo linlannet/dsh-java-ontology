@@ -17,13 +17,6 @@ rules:
     reusedBy: [Ontology_Create, Ontology_Promote]
     version: "1.0"
 
-      - { name: lang, type: String, sourceField: OntologyI18n.lang, required: true }
-    outputType: Boolean
-    expression: |
-      lang != 'zh'
-    reusedBy: [Ontology_I18n_Save]
-    version: "1.0"
-
   - id: RULE-PROMOTE-ELIGIBLE
     name: 发现实体晋升资格
     ruleType: VALIDATION
@@ -35,55 +28,6 @@ rules:
     expression: |
       status == 'DISCOVERED' AND LENGTH(TRIM(entityName)) > 0
     reusedBy: [Ontology_Promote]
-    version: "1.0"
-
-  # ══════════════════════════════════════════════════════════
-  # 二、监测域规则
-  # ══════════════════════════════════════════════════════════
-      - { name: url, type: String, sourceField: TrackCrawlSource.url, required: true }
-    outputType: Boolean
-    expression: |
-      url != null AND (url STARTS_WITH 'http://' OR url STARTS_WITH 'https://')
-    reusedBy: [CrawlSource_Create]
-    version: "1.0"
-
-      - { name: lastCrawlTime, type: DateTime, sourceField: TrackCrawlSource.lastCrawlTime, required: true }
-      - { name: intervalMinutes, type: Integer, sourceField: TrackCrawlSource.intervalMinutes, required: true }
-      - { name: currentTime, type: DateTime, sourceField: System.currentTime, required: true }
-    outputType: Boolean
-    expression: |
-      currentTime >= lastCrawlTime + intervalMinutes * 60000
-    reusedBy: [CrawlTask_Execute]
-    version: "1.0"
-
-      - { name: articleHash, type: String, sourceField: TrackArticle.articleHash, required: true }
-      - { name: tenantId, type: Long, sourceField: TrackArticle.tenantId, required: true }
-    outputType: Boolean
-    expression: |
-      NOT EXISTS(TrackArticle WHERE articleHash == this.articleHash AND tenantId == this.tenantId AND del_flag == 0)
-    reusedBy: [Article_Save]
-    version: "1.0"
-
-  # ══════════════════════════════════════════════════════════
-  # 三、分析域规则
-  # ══════════════════════════════════════════════════════════
-      - { name: deployed, type: Integer, sourceField: AnalyzeNlpVersion.deployed, required: true }
-    outputType: Boolean
-    expression: |
-      deployed == 1
-    reusedBy: [Nlp_Process]
-    version: "1.0"
-
-      - { name: ruleType, type: String, sourceField: AnalyzeAlertRule.ruleType, required: true }
-      - { name: conditionConfig, type: String, sourceField: AnalyzeAlertRule.conditionConfig, required: true }
-      - { name: articleContent, type: String, sourceField: TrackArticle.content, required: true }
-    outputType: Boolean
-    expression: |
-      IF ruleType == 'keyword' THEN evaluateKeywordMatch(conditionConfig, articleContent)
-      ELSE IF ruleType == 'sentiment' THEN evaluateSentimentMatch(conditionConfig, articleContent)
-      ELSE IF ruleType == 'event' THEN evaluateEventMatch(conditionConfig, articleContent)
-      ELSE false
-    reusedBy: [Alert_Check]
     version: "1.0"
 
   # ══════════════════════════════════════════════════════════

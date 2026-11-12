@@ -1,0 +1,288 @@
+# SIIS 对象模型元文件（项目层）- siis-object.yaml
+# SIIS 业务特定实体：国家/机构/人物/热点/媒体/书籍/论文/双边关系 + 监测/分析/展示三域
+model_type: OBJECT
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+aggregates:
+  - id: AGG-ONT-COUNTRY-001
+    name: 国家
+    alias: OntologyCountry
+    aggregateType: AGGREGATE_ROOT
+    description: 国家信息库，含 ISO 代码、洲、首都、语言、货币等
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+  - id: AGG-ONT-ORG-001
+    name: 机构
+    alias: OntologyOrganization
+    aggregateType: AGGREGATE_ROOT
+    description: 机构信息库，含政府/NGO/企业/媒体/大学等类型
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+  - id: AGG-ONT-PERSON-001
+    name: 人物
+    alias: OntologyPerson
+    aggregateType: AGGREGATE_ROOT
+    description: 人物信息库，含性别、出生日期、国籍、职业、头衔、所属机构等
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+  - id: AGG-ONT-HOTSPOT-001
+    name: 热点话题
+    alias: OntologyHotspot
+    aggregateType: AGGREGATE_ROOT
+    description: 热点话题库，含关键词、相关国家、热度分、风险等级
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+  - id: AGG-ONT-MEDIA-001
+    name: 媒体
+    alias: OntologyMedia
+    aggregateType: AGGREGATE_ROOT
+    description: 媒体资料库，含类型/所属国家/语言/受众规模/倾向评级
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+  - id: AGG-ONT-BOOK-001
+    name: 书籍
+    alias: OntologyBook
+    aggregateType: AGGREGATE_ROOT
+    description: 书籍信息库，含作者/出版社/出版年/ISBN/页数/分类/摘要
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+  - id: AGG-ONT-PAPER-001
+    name: 论文
+    alias: OntologyPaper
+    aggregateType: AGGREGATE_ROOT
+    description: 论文信息库，含作者/机构/期刊/发表年份/DOI/摘要/关键词/学科分类
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+  - id: AGG-ONT-BILATERAL-001
+    name: 双边关系
+    alias: OntologyBilateralRelation
+    aggregateType: AGGREGATE_ROOT
+    description: 国家间双边关系表，含关系类型/级别/起始年份
+    lifecycle: [有效, 无效]
+    tags: [本体域, 共享层]
+    attributes:
+  - id: AGG-TRK-ARTICLE-001
+    name: 文章
+    alias: TrackArticle
+    aggregateType: AGGREGATE_ROOT
+    description: 采集到的文章记录，含哈希去重/标题/URL/语种/发布时间/情感/NLP状态
+    lifecycle: [PENDING, COMPLETED]
+    tags: [监测域, 个人层]
+    attributes:
+  - id: AGG-TRK-CRAWL-SOURCE-001
+    name: 采集源
+    alias: TrackCrawlSource
+    aggregateType: AGGREGATE_ROOT
+    description: 采集源配置，含类型/URL/语种/分类/采集间隔/上次采集状态
+    lifecycle: [启用, 停用]
+    tags: [监测域, 个人层]
+    attributes:
+  - id: AGG-TRK-CRAWL-SUB-001
+    name: 采集订阅
+    alias: TrackCrawlSubscription
+    aggregateType: AGGREGATE_ROOT
+    description: 采集订阅配置，关联源/关键词组/用户，含时间窗口
+    lifecycle: [启用, 停用]
+    tags: [监测域, 个人层]
+    attributes:
+  - id: AGG-TRK-CRAWL-TASK-001
+    name: 采集任务
+    alias: TrackCrawlTask
+    aggregateType: AGGREGATE_ROOT
+    description: 采集任务执行记录，含状态/计划时间/频率/文章数/错误信息/重试次数
+    lifecycle: [pending, running, success, failed]
+    tags: [监测域, 个人层]
+    attributes:
+  - id: AGG-TRK-KEYWORD-GROUP-001
+    name: 关键词组
+    alias: TrackCrawlKeywordGroup
+    aggregateType: AGGREGATE_ROOT
+    description: 采集关键词组，支持中/英/法/阿拉伯四语种关键词，含匹配模式
+    lifecycle: [启用, 停用]
+    tags: [监测域, 个人层]
+    attributes:
+  - id: AGG-TRK-DATA-IMPORT-001
+    name: 数据导入
+    alias: TrackDataImport
+    aggregateType: AGGREGATE_ROOT
+    description: 数据导入记录，含类型/文件路径/记录数/目标表/状态/错误行数
+    lifecycle: [pending, running, success, failed]
+    tags: [监测域, 个人层]
+    attributes:
+  - id: AGG-TRK-DATA-EXPORT-001
+    name: 数据导出
+    alias: TrackDataExport
+    aggregateType: AGGREGATE_ROOT
+    description: 数据导出记录，含类型/源表/筛选条件/文件路径/下载Token/过期时间
+    lifecycle: [pending, running, success, failed]
+    tags: [监测域, 个人层]
+    attributes:
+  - id: AGG-TRK-KG-NODE-001
+    name: 个人图谱节点
+    alias: TrackKgNode
+    aggregateType: AGGREGATE_ROOT
+    description: 个人知识图谱节点，含节点类型/名称/关联本体实体/属性/权重/来源文章
+    lifecycle: [有效, 无效]
+    tags: [监测域, 个人层, 知识图谱]
+    attributes:
+  - id: AGG-TRK-KG-EDGE-001
+    name: 个人图谱边
+    alias: TrackKgEdge
+    aggregateType: AGGREGATE_ROOT
+    description: 个人知识图谱边，含源/目标节点/关系类型/属性/权重/证据文章
+    lifecycle: [有效, 无效]
+    tags: [监测域, 个人层, 知识图谱]
+    attributes:
+  - id: AGG-TRK-KG-BUILD-LOG-001
+    name: 图谱构建日志
+    alias: TrackKgBuildLog
+    aggregateType: AGGREGATE_ROOT
+    description: 知识图谱构建日志，含主题/状态/节点数/边数/耗时/错误
+    lifecycle: [running, success, failed]
+    tags: [监测域, 个人层, 知识图谱]
+    attributes:
+  - id: AGG-TRK-NER-ELEMENT-001
+    name: NER要素
+    alias: TrackNerElement
+    aggregateType: AGGREGATE_ROOT
+    description: 文章NER要素抽取结果，含时间/地点/人物/事件/方式/原因六要素
+    lifecycle: [有效, 无效]
+    tags: [监测域, 个人层, NLP]
+    attributes:
+  - id: AGG-ANZ-TOPIC-001
+    name: 追踪主题
+    alias: AnalyzeTrackTopic
+    aggregateType: AGGREGATE_ROOT
+    description: 追踪主题，含类型/关注区域/关键词组/采集源/告警规则/状态
+    lifecycle: [active, paused, closed]
+    tags: [分析域, 个人层]
+    attributes:
+  - id: AGG-ANZ-NLP-ENTITY-001
+    name: NLP实体识别
+    alias: AnalyzeNlpEntity
+    aggregateType: AGGREGATE_ROOT
+    description: NLP实体识别结果，含实体类型/值/位置/置信度
+    lifecycle: [有效, 无效]
+    tags: [分析域, 个人层, NLP]
+    attributes:
+  - id: AGG-ANZ-NLP-TRIPLE-001
+    name: NLP三元组
+    alias: AnalyzeNlpTriple
+    aggregateType: AGGREGATE_ROOT
+    description: NLP三元组抽取结果，含主语/谓词/宾语及类型/置信度
+    lifecycle: [有效, 无效]
+    tags: [分析域, 个人层, NLP]
+    attributes:
+  - id: AGG-ANZ-NLP-SENTIMENT-001
+    name: NLP情感分析
+    alias: AnalyzeNlpSentiment
+    aggregateType: AGGREGATE_ROOT
+    description: NLP情感分析结果，含情感/得分/置信度/正负面词
+    lifecycle: [有效, 无效]
+    tags: [分析域, 个人层, NLP]
+    attributes:
+  - id: AGG-ANZ-ALERT-RULE-001
+    name: 告警规则
+    alias: AnalyzeAlertRule
+    aggregateType: AGGREGATE_ROOT
+    description: 告警规则，含类型/条件配置/级别/渠道/目标
+    lifecycle: [启用, 停用]
+    tags: [分析域, 个人层]
+    attributes:
+  - id: AGG-ANZ-NLP-VERSION-001
+    name: NLP模型版本
+    alias: AnalyzeNlpVersion
+    aggregateType: AGGREGATE_ROOT
+    description: NLP模型版本管理，含模型名/版本/类型/路径/准确率/精确率/召回率/F1/部署状态
+    lifecycle: [未部署, 已部署]
+    tags: [分析域, 个人层, NLP]
+    attributes:
+  - id: AGG-DSP-RPT-TEMPLATE-001
+    name: 报告模板
+    alias: DisplayRptTemplate
+    aggregateType: AGGREGATE_ROOT
+    description: 报告模板，含类型/内容/默认参数/排序
+    lifecycle: [有效, 无效]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-RPT-REPORT-001
+    name: 报告记录
+    alias: DisplayRptReport
+    aggregateType: AGGREGATE_ROOT
+    description: 报告记录，含模板/主题/时间范围/内容/文件/可见范围
+    lifecycle: [draft, published, archived]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-ALERT-RECORD-001
+    name: 告警记录
+    alias: DisplayAlertRecord
+    aggregateType: AGGREGATE_ROOT
+    description: 告警记录，含规则/级别/标题/内容/触发文章/状态/处理信息
+    lifecycle: [unread, read, resolved]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-INFO-PUBLISH-001
+    name: 信息发布
+    alias: DisplayInformationPublish
+    aggregateType: AGGREGATE_ROOT
+    description: 信息发布，含标题/类型/内容/作者/状态/发布时间/分类
+    lifecycle: [draft, published, archived]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-PUSH-RECORD-001
+    name: 推送记录
+    alias: DisplayPushRecord
+    aggregateType: AGGREGATE_ROOT
+    description: 推送记录，含类型/目标/文章/报告/标题/内容/状态/发送时间
+    lifecycle: [pending, success, failed]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-RECOMMEND-001
+    name: 推荐记录
+    alias: DisplayRecommendationRecord
+    aggregateType: AGGREGATE_ROOT
+    description: 推荐记录，含用户/类型/目标/标题/得分/理由/状态
+    lifecycle: [unread, read, adopted, dismissed]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-SEARCH-INDEX-001
+    name: 搜索索引
+    alias: DisplaySearchIndex
+    aggregateType: AGGREGATE_ROOT
+    description: 搜索索引，含实体类型/ID/名称/关键词/索引数据
+    lifecycle: [有效, 无效]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-CONFERENCE-001
+    name: 会议信息
+    alias: DisplayConferenceInfo
+    aggregateType: AGGREGATE_ROOT
+    description: 会议信息，含名称/时间/地点/主办方/参会人员/描述/状态
+    lifecycle: [upcoming, ongoing, ended, cancelled]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-COLUMN-001
+    name: 栏目管理
+    alias: DisplayColumnManage
+    aggregateType: AGGREGATE_ROOT
+    description: 栏目管理，含名称/编码/关联表/可见/排序/配置
+    lifecycle: [可见, 隐藏]
+    tags: [展示域, 个人层]
+    attributes:
+  - id: AGG-DSP-MODULE-CONFIG-001
+    name: 用户模块配置
+    alias: DisplayUserModuleConfig
+    aggregateType: AGGREGATE_ROOT
+    description: 用户模块配置，含模块编码/名称/配置数据/显示/排序
+    lifecycle: [显示, 隐藏]
+    tags: [展示域, 个人层]
+    attributes:

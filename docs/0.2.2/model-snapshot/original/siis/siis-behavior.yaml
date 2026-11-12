@@ -1,0 +1,204 @@
+# SIIS 行为模型元文件（项目层）- siis-behavior.yaml
+# SIIS 业务特定行为：采集编排 + NLP分析 + 告警触发 + 报告生成 + 推送推荐
+model_type: BEHAVIOR
+version: "3.0"
+domain: "全球多语种信息监测与决策分析"
+project: "siis"
+
+behaviors:
+  - id: Ontology_I18n_Save
+    name: 保存多语种翻译
+    ownerEntity: AGG-ONT-ENTITY-001
+    behaviorType: COMMAND
+    triggerType: USER_ACTION
+    preconditions: ["关联实体存在", "语种非中文（中文存主表）"]
+    postconditions: []
+    appliedRules: [RULE-I18N-LANG-NOT-ZH]
+    requiredPermissions: [PERM-ONT-UPDATE]
+    syncTriggers: []
+
+  - id: CrawlSource_Create
+    name: 创建采集源
+    ownerEntity: AGG-TRK-CRAWL-SOURCE-001
+    behaviorType: COMMAND
+    triggerType: USER_ACTION
+    preconditions: ["URL格式合法"]
+    postconditions: []
+    appliedRules: [RULE-URL-VALID]
+    requiredPermissions: [PERM-TRACK-CREATE]
+    syncTriggers: []
+
+  - id: CrawlTask_Execute
+    name: 执行采集任务
+    ownerEntity: AGG-TRK-CRAWL-TASK-001
+    behaviorType: COMMAND
+    triggerType: SCHEDULED
+    preconditions: ["采集源已启用", "任务状态为 pending"]
+    postconditions:
+  - id: CrawlTask_Complete
+    name: 完成采集任务
+    ownerEntity: AGG-TRK-CRAWL-TASK-001
+    behaviorType: COMMAND
+    triggerType: SYSTEM
+    preconditions: ["任务状态为 running"]
+    postconditions:
+  - id: Article_Save
+    name: 保存采集文章
+    ownerEntity: AGG-TRK-ARTICLE-001
+    behaviorType: COMMAND
+    triggerType: SYSTEM
+    preconditions: ["文章哈希未重复（同租户内）"]
+    postconditions:
+  - id: Article_Query
+    name: 查询文章列表
+    ownerEntity: AGG-TRK-ARTICLE-001
+    behaviorType: QUERY
+    triggerType: USER_ACTION
+    preconditions: []
+    postconditions: []
+    appliedRules: []
+    requiredPermissions: [PERM-TRACK-QUERY]
+    syncTriggers: []
+    queryReportRef: REP-ARTICLE-LIST
+
+  - id: Kg_Build
+    name: 构建个人知识图谱
+    ownerEntity: AGG-TRK-KG-NODE-001
+    behaviorType: COMMAND
+    triggerType: USER_ACTION
+    preconditions: ["主题存在", "存在已NLP处理的文章"]
+    postconditions: []
+    appliedRules: []
+    requiredPermissions: [PERM-TRACK-KG-BUILD]
+    syncTriggers:
+  - id: Kg_Build_Log
+    name: 记录图谱构建日志
+    ownerEntity: AGG-TRK-KG-BUILD-LOG-001
+    behaviorType: COMMAND
+    triggerType: SYSTEM
+    preconditions: []
+    postconditions: []
+    appliedRules: []
+    requiredPermissions: []
+    syncTriggers: []
+
+  # ══════════════════════════════════════════════════════════
+  # 三、分析域行为（个人层，NLP + 告警）
+  # ══════════════════════════════════════════════════════════
+  - id: Topic_Create
+    name: 创建追踪主题
+    ownerEntity: AGG-ANZ-TOPIC-001
+    behaviorType: COMMAND
+    triggerType: USER_ACTION
+    preconditions: ["主题名称非空"]
+    postconditions: []
+    appliedRules: []
+    requiredPermissions: [PERM-ANALYZE-CREATE]
+    syncTriggers: []
+
+  - id: Nlp_Process
+    name: NLP处理文章
+    ownerEntity: AGG-ANZ-NLP-ENTITY-001
+    behaviorType: COMMAND
+    triggerType: SYSTEM
+    preconditions: ["文章NLP状态为 PENDING", "已部署NLP模型"]
+    postconditions:
+  - id: Alert_Check
+    name: 检查告警规则
+    ownerEntity: AGG-ANZ-ALERT-RULE-001
+    behaviorType: COMMAND
+    triggerType: SYSTEM
+    preconditions: ["主题已启用告警", "存在启用的告警规则"]
+    postconditions: []
+    appliedRules: [RULE-ALERT-CONDITION-MATCH]
+    requiredPermissions: []
+    syncTriggers:
+  - id: Alert_Record_Create
+    name: 创建告警记录
+    ownerEntity: AGG-DSP-ALERT-RECORD-001
+    behaviorType: COMMAND
+    triggerType: SYSTEM
+    preconditions: ["告警规则匹配成功"]
+    postconditions:
+  - id: Report_Generate
+    name: 生成报告
+    ownerEntity: AGG-DSP-RPT-REPORT-001
+    behaviorType: COMMAND
+    triggerType: USER_ACTION
+    preconditions: ["模板存在", "主题存在"]
+    postconditions:
+  - id: Report_Publish
+    name: 发布报告
+    ownerEntity: AGG-DSP-RPT-REPORT-001
+    behaviorType: COMMAND
+    triggerType: USER_ACTION
+    preconditions: ["报告状态为 draft"]
+    postconditions:
+  - id: Push_Send
+    name: 发送推送
+    ownerEntity: AGG-DSP-PUSH-RECORD-001
+    behaviorType: COMMAND
+    triggerType: SYSTEM
+    preconditions: ["推送目标有效"]
+    postconditions:
+  - id: Recommend_Generate
+    name: 生成推荐
+    ownerEntity: AGG-DSP-RECOMMEND-001
+    behaviorType: COMMAND
+    triggerType: SYSTEM
+    preconditions: ["用户存在"]
+    postconditions: []
+    appliedRules: []
+    requiredPermissions: []
+    syncTriggers: []
+
+  # ══════════════════════════════════════════════════════════
+  # 五、沉淀域行为（个人层，发现实体 + 向量索引）
+  # ══════════════════════════════════════════════════════════
+  - id: Track_QueryList
+    name: 查询监测域列表
+    ownerEntity: AGG-TRK-ARTICLE-001
+    behaviorType: QUERY
+    triggerType: USER_ACTION
+    preconditions: []
+    postconditions: []
+    appliedRules: []
+    requiredPermissions: [PERM-TRACK-QUERY]
+    syncTriggers: []
+    queryReportRef: REP-TRACK-OVERVIEW
+
+  - id: Analyze_QueryTopic
+    name: 查询追踪主题
+    ownerEntity: AGG-ANZ-TOPIC-001
+    behaviorType: QUERY
+    triggerType: USER_ACTION
+    preconditions: []
+    postconditions: []
+    appliedRules: []
+    requiredPermissions: [PERM-ANALYZE-QUERY]
+    syncTriggers: []
+    queryReportRef: REP-TOPIC-ANALYSIS
+
+  - id: Display_QueryReport
+    name: 查询报告列表
+    ownerEntity: AGG-DSP-RPT-REPORT-001
+    behaviorType: QUERY
+    triggerType: USER_ACTION
+    preconditions: []
+    postconditions: []
+    appliedRules: []
+    requiredPermissions: [PERM-DISPLAY-QUERY]
+    syncTriggers: []
+    queryReportRef: REP-REPORT-LIST
+
+  - id: Global_QueryUnified
+    name: 查询统一层视图（主任专属）
+    ownerEntity: AGG-GLB-KG-NODE-001
+    behaviorType: QUERY
+    triggerType: USER_ACTION
+    preconditions: ["用户为主任角色"]
+    postconditions: []
+    appliedRules: [ROLE-DIRECTOR-ONLY]
+    requiredPermissions: [PERM-GLOBAL-QUERY]
+    syncTriggers: []
+    queryReportRef: REP-UNIFIED-KG

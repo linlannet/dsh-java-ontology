@@ -105,18 +105,21 @@ public class KnowledgeAggregator {
     }
 
     /**
-     * 汇聚双边关系：从 gwy_ontology_bilateral_relation → onto_global_bilateral_relation
+     * 汇聚双边关系：从 onto_ontology_entity(category=bilateralRelation) + 属性 → onto_global_bilateral_relation
      */
     public int aggregateBilateralRelations() {
         String sql = "INSERT INTO onto_global_bilateral_relation (subject_entity_name, object_entity_name, relation_type, tenant_ids, avg_score, sample_count, created_by) " +
-                "SELECT r.country_a, r.country_b, r.relation_type, " +
-                "CONCAT('[', GROUP_CONCAT(DISTINCT r.tenant_id), ']') AS tenant_ids, " +
+                "SELECT ca.attr_value, cb.attr_value, COALESCE(rt.attr_value, 'bilateral'), " +
+                "CONCAT('[', GROUP_CONCAT(DISTINCT e.tenant_id), ']') AS tenant_ids, " +
                 "1.0 AS avg_score, " +
                 "COUNT(*) AS sample_count, " +
                 "'aggregator' " +
-                "FROM gwy_ontology_bilateral_relation r " +
-                "WHERE r.del_flag = 0 " +
-                "GROUP BY r.country_a, r.country_b, r.relation_type " +
+                "FROM onto_ontology_entity e " +
+                "JOIN onto_ontology_attribute ca ON ca.entity_id = e.id AND ca.attr_name = 'country_a' AND ca.del_flag = 0 " +
+                "JOIN onto_ontology_attribute cb ON cb.entity_id = e.id AND cb.attr_name = 'country_b' AND cb.del_flag = 0 " +
+                "LEFT JOIN onto_ontology_attribute rt ON rt.entity_id = e.id AND rt.attr_name = 'relation_type' AND rt.del_flag = 0 " +
+                "WHERE e.category = 'bilateralRelation' AND e.del_flag = 0 " +
+                "GROUP BY ca.attr_value, cb.attr_value, rt.attr_value " +
                 "ON DUPLICATE KEY UPDATE " +
                 "tenant_ids = VALUES(tenant_ids), " +
                 "avg_score = VALUES(avg_score), " +
@@ -126,7 +129,7 @@ public class KnowledgeAggregator {
     }
 
     /**
-     * 汇聚知识图谱节点：从 gwy_track_kg_node → onto_global_kg_node
+     * 汇聚知识图谱节点：从 onto_track_kg_node → onto_global_kg_node
      */
     public int aggregateKgNodes() {
         String sql = "INSERT INTO onto_global_kg_node (node_name, node_type, tenant_ids, cross_tenant_weight, created_by) " +
@@ -134,7 +137,7 @@ public class KnowledgeAggregator {
                 "CONCAT('[', GROUP_CONCAT(DISTINCT n.tenant_id), ']') AS tenant_ids, " +
                 "COUNT(DISTINCT n.tenant_id) AS cross_tenant_weight, " +
                 "'aggregator' " +
-                "FROM gwy_track_kg_node n " +
+                "FROM onto_track_kg_node n " +
                 "WHERE n.del_flag = 0 " +
                 "GROUP BY n.node_name, n.node_type " +
                 "ON DUPLICATE KEY UPDATE " +
@@ -145,7 +148,7 @@ public class KnowledgeAggregator {
     }
 
     /**
-     * 汇聚知识图谱边：从 gwy_track_kg_edge → onto_global_kg_edge
+     * 汇聚知识图谱边：从 onto_track_kg_edge → onto_global_kg_edge
      */
     public int aggregateKgEdges() {
         String sql = "INSERT INTO onto_global_kg_edge (source_node_id, target_node_id, relation_type, tenant_ids, cross_tenant_weight, created_by) " +
@@ -153,7 +156,7 @@ public class KnowledgeAggregator {
                 "CONCAT('[', GROUP_CONCAT(DISTINCT e.tenant_id), ']') AS tenant_ids, " +
                 "COUNT(DISTINCT e.tenant_id) AS cross_tenant_weight, " +
                 "'aggregator' " +
-                "FROM gwy_track_kg_edge e " +
+                "FROM onto_track_kg_edge e " +
                 "WHERE e.del_flag = 0 " +
                 "GROUP BY e.source_node_id, e.target_node_id, e.relation_type " +
                 "ON DUPLICATE KEY UPDATE " +
@@ -182,11 +185,14 @@ public class KnowledgeAggregator {
 
     private int aggregateBilateralRelationsForTenant(Long tenantId) {
         String sql = "INSERT INTO onto_global_bilateral_relation (subject_entity_name, object_entity_name, relation_type, tenant_ids, avg_score, sample_count, created_by) " +
-                "SELECT r.country_a, r.country_b, r.relation_type, " +
-                "CONCAT('[', r.tenant_id, ']'), " +
+                "SELECT ca.attr_value, cb.attr_value, COALESCE(rt.attr_value, 'bilateral'), " +
+                "CONCAT('[', e.tenant_id, ']'), " +
                 "1.0, 1, 'aggregator' " +
-                "FROM gwy_ontology_bilateral_relation r " +
-                "WHERE r.del_flag = 0 AND r.tenant_id = ? " +
+                "FROM onto_ontology_entity e " +
+                "JOIN onto_ontology_attribute ca ON ca.entity_id = e.id AND ca.attr_name = 'country_a' AND ca.del_flag = 0 " +
+                "JOIN onto_ontology_attribute cb ON cb.entity_id = e.id AND cb.attr_name = 'country_b' AND cb.del_flag = 0 " +
+                "LEFT JOIN onto_ontology_attribute rt ON rt.entity_id = e.id AND rt.attr_name = 'relation_type' AND rt.del_flag = 0 " +
+                "WHERE e.category = 'bilateralRelation' AND e.del_flag = 0 AND e.tenant_id = ? " +
                 "ON DUPLICATE KEY UPDATE " +
                 "avg_score = (avg_score * sample_count + VALUES(avg_score)) / (sample_count + 1), " +
                 "sample_count = sample_count + 1, " +
@@ -197,7 +203,7 @@ public class KnowledgeAggregator {
     private int aggregateKgNodesForTenant(Long tenantId) {
         String sql = "INSERT INTO onto_global_kg_node (node_name, node_type, tenant_ids, cross_tenant_weight, created_by) " +
                 "SELECT n.node_name, n.node_type, CONCAT('[', n.tenant_id, ']'), 1, 'aggregator' " +
-                "FROM gwy_track_kg_node n " +
+                "FROM onto_track_kg_node n " +
                 "WHERE n.del_flag = 0 AND n.tenant_id = ? " +
                 "GROUP BY n.node_name, n.node_type " +
                 "ON DUPLICATE KEY UPDATE " +
@@ -209,7 +215,7 @@ public class KnowledgeAggregator {
     private int aggregateKgEdgesForTenant(Long tenantId) {
         String sql = "INSERT INTO onto_global_kg_edge (source_node_id, target_node_id, relation_type, tenant_ids, cross_tenant_weight, created_by) " +
                 "SELECT e.source_node_id, e.target_node_id, e.relation_type, CONCAT('[', e.tenant_id, ']'), 1, 'aggregator' " +
-                "FROM gwy_track_kg_edge e " +
+                "FROM onto_track_kg_edge e " +
                 "WHERE e.del_flag = 0 AND e.tenant_id = ? " +
                 "GROUP BY e.source_node_id, e.target_node_id, e.relation_type " +
                 "ON DUPLICATE KEY UPDATE " +

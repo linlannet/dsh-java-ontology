@@ -105,14 +105,14 @@ class EndToEndIntegrationTest {
     @Order(3)
     @DisplayName("端到端：多租户隔离")
     void testMultiTenantIsolation() {
-        jdbcTemplate.update("DELETE FROM gwy_track_article WHERE title LIKE 'E2E租户测试%'");
+        jdbcTemplate.update("DELETE FROM onto_track_article WHERE title LIKE 'E2E租户测试%'");
         insertArticleForTenant(null, "E2E租户测试-租户1", "zh", "租户1的文章内容", 1L);
         insertArticleForTenant(null, "E2E租户测试-租户2", "zh", "租户2的文章内容", 2L);
 
         List<Map<String, Object>> tenant1Articles = jdbcTemplate.queryForList(
-                "SELECT * FROM gwy_track_article WHERE title LIKE 'E2E租户测试%' AND tenant_id = 1 AND del_flag = 0");
+                "SELECT * FROM onto_track_article WHERE title LIKE 'E2E租户测试%' AND tenant_id = 1 AND del_flag = 0");
         List<Map<String, Object>> tenant2Articles = jdbcTemplate.queryForList(
-                "SELECT * FROM gwy_track_article WHERE title LIKE 'E2E租户测试%' AND tenant_id = 2 AND del_flag = 0");
+                "SELECT * FROM onto_track_article WHERE title LIKE 'E2E租户测试%' AND tenant_id = 2 AND del_flag = 0");
 
         assertFalse(tenant1Articles.isEmpty(), "租户1应有文章");
         assertFalse(tenant2Articles.isEmpty(), "租户2应有文章");
@@ -226,7 +226,7 @@ class EndToEndIntegrationTest {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO gwy_analyze_track_topic (topic_name, topic_type, hotspot_region, tenant_id, created_by) " +
+                    "INSERT INTO onto_analyze_track_topic (topic_name, topic_type, hotspot_region, tenant_id, created_by) " +
                             "VALUES (?, ?, ?, 1, 'test')",
                     new String[]{"id"});
             ps.setString(1, name);
@@ -246,7 +246,7 @@ class EndToEndIntegrationTest {
         String hash = "e2e_" + System.nanoTime();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO gwy_track_article (article_hash, title, content, lang, topic_id, url, published, tenant_id, created_by) " +
+                    "INSERT INTO onto_track_article (article_hash, title, content, lang, topic_id, url, published, tenant_id, created_by) " +
                             "VALUES (?, ?, ?, ?, ?, 'https://e2e.test', NOW(), ?, 'test')",
                     new String[]{"id"});
             ps.setString(1, hash);
