@@ -52,6 +52,6 @@
 - `README.md` / `README.en.md` / `llms.txt`
 - `CHANGELOG.md`
 - `docs/0.2.1/` / `docs/0.2.2/`
-- `docs/0.3.0/auth-tenant-design.md`（身份/租户接入：linlan-emis = IdP，本平台 = RS）
+- `docs/0.2.3`（身份/租户接入：linlan-emis = IdP，本平台 = RS）
 - `docs/contract/permissions.yaml`
 - `dsh-ontolab-siis/README.md`

@@ -29,10 +29,10 @@
 ## 版本号：0.3.0（文档规划）
 - 更新日期：2026-11-10
 
-1. 身份分层对齐：明确 **linlan-emis（BuddyOne）** 为唯一 IdP（Java `backend` + Python `py-api` 双路线），`dsh-java-ontology` 不再新建 `dsh-auth`，改为 OAuth2 Resource Server（`docs/0.3.0/auth-tenant-design.md`）
-2. JWT claims 契约调整为以 `tenant_id` / `role_level` / `user_name` 为准，过渡期先读 snake_case、缺失回退旧 camelCase，P4 收口移除回退（`docs/0.3.0`）
-3. 明确 `auth_*` 表与租户/成员模型归属 linlan-emis；本仓库不建认证表，只保留 `tenant_id` 与 `TenantContext`（`docs/0.3.0`）
-4. 分期重排为 ontology 侧 P0~P4，与 linlan-emis 发版节奏对齐；新增双路线契约漂移风险 R11（`docs/0.3.0`）
+1. 身份分层对齐：明确 **linlan-emis（BuddyOne）** 为唯一 IdP（Java `backend` + Python `py-api` 双路线），`dsh-java-ontology` 不再新建 `dsh-auth`，改为 OAuth2 Resource Server（`docs/0.2.3`）
+2. JWT claims 契约调整为以 `tenant_id` / `role_level` / `user_name` 为准，过渡期先读 snake_case、缺失回退旧 camelCase，P4 收口移除回退（`docs/0.2.3`）
+3. 明确 `auth_*` 表与租户/成员模型归属 linlan-emis；本仓库不建认证表，只保留 `tenant_id` 与 `TenantContext`（`docs/0.2.3`）
+4. 分期重排为 ontology 侧 P0~P4，与 linlan-emis 发版节奏对齐；新增双路线契约漂移风险 R11（`docs/0.2.3`）
 5. 文档口径同步：README / README.en / AGENTS.md / llms.txt 增加分层定位与 0.3.0 规划说明（仓库）
 
 ## 版本号：0.2.2

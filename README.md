@@ -17,7 +17,7 @@
 
 当前版本 **0.2.2**，与 `dsh-java` 0.2.2 契约对齐。
 
-**身份分层（0.3.0 规划）**：`linlan-emis/backend`（Java）与 `linlan-emis/py-api`（Python）是 BuddyOne 的两条路线，统一签发 OIDC token；本平台不再自建 IdP，改为通过 JWKS 验签并消费 `tenant_id` / `role_level`。设计见 [docs/0.3.0/auth-tenant-design.md](./docs/0.3.0/auth-tenant-design.md)；当前 0.2.2 仍为内置 JWT + BCrypt 过渡态。
+**身份分层（0.3.0 规划）**：`linlan-emis/backend`（Java）与 `linlan-emis/py-api`（Python）是 BuddyOne 的两条路线，统一签发 OIDC token；本平台不再自建 IdP，改为通过 JWKS 验签并消费 `tenant_id` / `role_level`。设计见 [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md)；当前 0.2.2 仍为内置 JWT + BCrypt 过渡态。
 
 ## 功能特性
 
@@ -180,7 +180,7 @@ curl -X POST http://localhost:8090/api/harness/plugins/activate \
 | `dsh.ontology.jwt.secret` | `JWT_SECRET` | （内置默认） | JWT 签名密钥；生产必须覆盖 |
 | `dsh.ontology.auth.default-director-enabled` | `DSH_AUTH_DEFAULT_DIRECTOR` | `true` | 未携带有效 JWT 时按主任（roleLevel=0、跨租户）放行；桌面端暂无登录界面时使用，生产应设为 `false` |
 
-> 0.3.0 规划：验签改为 **linlan-emis** 的 `issuer` + JWKS（`dsh.auth.issuer` / `dsh.auth.jwks-uri` / `dsh.auth.audience`），`dsh.ontology.jwt.secret` 仅过渡期保留；详见 [docs/0.3.0/auth-tenant-design.md](./docs/0.3.0/auth-tenant-design.md)。
+> 0.3.0 规划：验签改为 **linlan-emis** 的 `issuer` + JWKS（`dsh.auth.issuer` / `dsh.auth.jwks-uri` / `dsh.auth.audience`），`dsh.ontology.jwt.secret` 仅过渡期保留；详见 [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md)。
 
 ## 6. 模块依赖关系
 
@@ -258,7 +258,7 @@ mvn -pl dsh-onto-base,dsh-onto-app -am test
 | [llms.txt](./llms.txt) | 机器可读摘要与命令索引 |
 | [docs/0.2.1/](./docs/0.2.1) | 平台设计与规格、`ONTO_DB_DESIGN`、架构对比、插件拆分、热点分析 |
 | [docs/0.2.2/](./docs/0.2.2) | 设计评审、静态/动态本体实施方案 |
-| [docs/0.3.0/auth-tenant-design.md](./docs/0.3.0/auth-tenant-design.md) | 身份/租户接入设计：linlan-emis（BuddyOne）为 IdP，本平台为 Resource Server |
+| [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md) | 身份/租户接入设计：linlan-emis（BuddyOne）为 IdP，本平台为 Resource Server |
 | [docs/contract/permissions.yaml](./docs/contract/permissions.yaml) | 权限契约 |
 | [docs/dev-ops/dsh_java_ontodb.sql](./docs/dev-ops/dsh_java_ontodb.sql) | 本体库 schema |
 | [dsh-ontolab-siis](https://github.com/linlannet/dsh-ontolab-siis) | 配套 SIIS 工程说明 |

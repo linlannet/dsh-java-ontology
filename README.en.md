@@ -17,7 +17,7 @@ An ontology knowledge engineering platform with a **base + flow + domain capabil
 
 Current version: **0.2.2**, contract-aligned with `dsh-java` 0.2.2.
 
-**Identity layering (0.3.0 plan)**: `linlan-emis/backend` (Java) and `linlan-emis/py-api` (Python) are the two BuddyOne routes and issue OIDC tokens uniformly; this platform no longer runs its own IdP and instead validates tokens via JWKS and consumes `tenant_id` / `role_level`. See [docs/0.3.0/auth-tenant-design.md](./docs/0.3.0/auth-tenant-design.md). Version 0.2.2 remains on the built-in JWT + BCrypt transition path.
+**Identity layering (0.3.0 plan)**: `linlan-emis/backend` (Java) and `linlan-emis/py-api` (Python) are the two BuddyOne routes and issue OIDC tokens uniformly; this platform no longer runs its own IdP and instead validates tokens via JWKS and consumes `tenant_id` / `role_level`. See [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md). Version 0.2.2 remains on the built-in JWT + BCrypt transition path.
 
 ## Features
 
@@ -179,7 +179,7 @@ curl -X POST http://localhost:8090/api/harness/plugins/activate \
 | `dsh.ontology.harness.base-url` | `DSH_HARNESS_BASE_URL` | `http://127.0.0.1:8090` | Harness URL |
 | `dsh.ontology.jwt.secret` | `JWT_SECRET` | (built-in default) | JWT signing secret; must be overridden in production |
 
-> 0.3.0 plan: verification switches to **linlan-emis** `issuer` + JWKS (`dsh.auth.issuer` / `dsh.auth.jwks-uri` / `dsh.auth.audience`); `dsh.ontology.jwt.secret` is kept only for the transition. See [docs/0.3.0/auth-tenant-design.md](./docs/0.3.0/auth-tenant-design.md).
+> 0.3.0 plan: verification switches to **linlan-emis** `issuer` + JWKS (`dsh.auth.issuer` / `dsh.auth.jwks-uri` / `dsh.auth.audience`); `dsh.ontology.jwt.secret` is kept only for the transition. See [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md).
 
 ## 6. Module Dependencies
 
@@ -257,7 +257,7 @@ mvn -pl dsh-onto-base,dsh-onto-app -am test
 | [llms.txt](./llms.txt) | Machine-readable summary and command index |
 | [docs/0.2.1/](./docs/0.2.1) | Platform design & spec, `ONTO_DB_DESIGN`, architecture comparison, plugin split, hotspot analysis |
 | [docs/0.2.2/](./docs/0.2.2) | Design review, static/dynamic ontology plans |
-| [docs/0.3.0/auth-tenant-design.md](./docs/0.3.0/auth-tenant-design.md) | Identity/tenant integration: linlan-emis (BuddyOne) as IdP, this platform as Resource Server |
+| [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md) | Identity/tenant integration: linlan-emis (BuddyOne) as IdP, this platform as Resource Server |
 | [docs/contract/permissions.yaml](./docs/contract/permissions.yaml) | Permission contract |
 | [docs/dev-ops/dsh_java_ontodb.sql](./docs/dev-ops/dsh_java_ontodb.sql) | Ontology schema |
 | [dsh-ontolab-siis](https://github.com/linlannet/dsh-ontolab-siis) | Companion SIIS project |
