@@ -10,8 +10,8 @@ spring:
     time-zone: Asia/Shanghai
   datasource:
     url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:dsh_java_ontodb}?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
-    username: ${DB_USER:root}
-    password: ${DB_PASSWORD:root}
+    username: ${DB_USER:lldba}
+    password: ${DB_PASSWORD:DB_Lldba_2023!}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       pool-name: OntologyHikariPool

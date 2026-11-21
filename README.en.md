@@ -17,7 +17,7 @@ An ontology knowledge engineering platform with a **base + flow + domain capabil
 
 Current version: **0.2.2**, contract-aligned with `dsh-java` 0.2.2.
 
-**Identity layering (0.3.0 plan)**: `linlan-emis/backend` (Java) and `linlan-emis/py-api` (Python) are the two BuddyOne routes and issue OIDC tokens uniformly; this platform no longer runs its own IdP and instead validates tokens via JWKS and consumes `tenant_id` / `role_level`. See [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md). Version 0.2.2 remains on the built-in JWT + BCrypt transition path.
+**Identity layering (0.3.0 plan)**: `linlan-emis/backend` (Java) and `../../linlan-emis/server` (Python) are the two BuddyOne routes and issue OIDC tokens uniformly; this platform no longer runs its own IdP and instead validates tokens via JWKS and consumes `tenant_id` / `role_level`. See [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md). Version 0.2.2 remains on the built-in JWT + BCrypt transition path.
 
 ## Features
 

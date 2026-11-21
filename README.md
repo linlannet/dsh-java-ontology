@@ -17,7 +17,7 @@
 
 当前版本 **0.2.2**，与 `dsh-java` 0.2.2 契约对齐。
 
-**身份分层（0.3.0 规划）**：`linlan-emis/backend`（Java）与 `linlan-emis/py-api`（Python）是 BuddyOne 的两条路线，统一签发 OIDC token；本平台不再自建 IdP，改为通过 JWKS 验签并消费 `tenant_id` / `role_level`。设计见 [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md)；当前 0.2.2 仍为内置 JWT + BCrypt 过渡态。
+**身份分层（0.3.0 规划）**：`linlan-emis/backend`（Java）与 `../../linlan-emis/server`（Python）是 BuddyOne 的两条路线，统一签发 OIDC token；本平台不再自建 IdP，改为通过 JWKS 验签并消费 `tenant_id` / `role_level`。设计见 [docs/0.3.0/auth-tenant-design.md](docs/0.2.3/auth-tenant-design.md)；当前 0.2.2 仍为内置 JWT + BCrypt 过渡态。
 
 ## 功能特性
 

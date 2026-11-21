@@ -202,7 +202,8 @@
     const page = unwrap(await get(API.siis + '/' + encodeURIComponent(category) + '/page?pageNum=1&pageSize=30'));
     const rows = (page && (page.records || page.list)) || [];
     const attributes = (schema && schema.attributes) || [];
-    const columns = attributes.length ? attributes.map(a => a.name) : (rows[0] ? Object.keys(rows[0]) : []);
+    // 列表列以接口返回的行数据为准（EAV 行键为 snake_case），无数据时回退模型属性
+    const columns = rows[0] ? Object.keys(rows[0]) : attributes.map(a => a.name);
 
     viewEl.innerHTML = `
       <h1>实体维护 <span class="badge">${esc(category)}</span></h1>
@@ -229,8 +230,14 @@
       const container = document.getElementById('entity-table');
       if (!rows.length) { container.innerHTML = '<div class="empty">暂无记录</div>'; return; }
       const cols = columns.length ? columns : ['id'];
+      // 模型属性名为 camelCase（如 isoCode），接口行数据为 snake_case（如 iso_code），需双向兼容
+      const cellOf = (row, col) => {
+        if (row[col] != null) return row[col];
+        const snakeKey = snake(col);
+        return row[snakeKey] != null ? row[snakeKey] : '';
+      };
       container.innerHTML = `<table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}<th>操作</th></tr></thead>
-        <tbody>${rows.map(row => `<tr>${cols.map(c => `<td>${esc(row[c] ?? row[camel(c)])}</td>`).join('')}
+        <tbody>${rows.map(row => `<tr>${cols.map(c => `<td>${esc(cellOf(row, c))}</td>`).join('')}
           <td><button type="button" class="secondary" data-edit="${row.id}">编辑</button>
           <button type="button" class="danger" data-del="${row.id}">删除</button></td></tr>`).join('')}</tbody></table>`;
       container.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => {

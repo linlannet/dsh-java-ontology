@@ -1,0 +1,56 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: dsh-java-ontology
+  jackson:
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+  datasource:
+    url: jdbc:h2:file:./data/dsh_java_ontodb;MODE=MySQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    encoding: UTF-8
+    table: sys_flyway_schema_history
+
+dsh:
+  # 应用层元信息（app 层专属前缀，业务配置 dsh.ontology.* 由 flow 层绑定）
+  app:
+    name: dsh-onto-app
+    version: 0.2.2
+    description: 聚合应用：打包 dsh-onto-base/flow/qa/viz/metric 五模块
+  ontology:
+    data-directory: ${user.home}/.dsh-java-ontology
+    query-timeout-seconds: 15
+    max-results: 100
+    model:
+      # 启动即加载 classpath 模型并执行完整性检查；坏模型会终止启动
+      enabled: ${DSH_ONTOLOGY_MODEL_ENABLED:true}
+      unknown-field-policy: ${DSH_ONTOLOGY_UNKNOWN_FIELD_POLICY:warn}
+    schema-validation:
+      # 写库前字段校验总开关；关闭后仅保留日志告警
+      enabled: ${DSH_ONTOLOGY_SCHEMA_VALIDATION_ENABLED:true}
+    harness:
+      base-url: ${DSH_HARNESS_BASE_URL:http://127.0.0.1:8090}
+    jwt:
+      secret: ${JWT_SECRET:dsh-java-ontology-secret-key-2026-please-change-in-production-at-least-32-chars}
+      expiration-ms: 86400000
+      header: Authorization
+      prefix: "Bearer "
+    auth:
+      # 桌面端暂无登录界面：未携带有效 JWT 时默认以主任（roleLevel=0、跨租户）身份放行；生产环境应设为 false
+      default-director-enabled: ${DSH_AUTH_DEFAULT_DIRECTOR:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

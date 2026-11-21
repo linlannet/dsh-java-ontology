@@ -9,6 +9,11 @@ import net.linlan.dsh.plat.model.AggregateVO;
 import net.linlan.dsh.plat.model.DomainGroupVO;
 import net.linlan.dsh.plat.model.IntegrityVO;
 import net.linlan.dsh.plat.model.ManifestVO;
+import net.linlan.dsh.plat.model.MaterializeConfirmRequest;
+import net.linlan.dsh.plat.model.MaterializePreviewVO;
+import net.linlan.dsh.plat.model.MaterializeRequest;
+import net.linlan.dsh.plat.model.MaterializeResultVO;
+import net.linlan.dsh.plat.service.ModelMaterializeService;
 import net.linlan.dsh.sys.security.RequiresRole;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
@@ -31,9 +36,12 @@ import java.util.HashSet;
 public class ModelController {
 
     private final OntologyModelEngine engine;
+    private final ModelMaterializeService materializeService;
 
-    public ModelController(ObjectProvider<OntologyModelEngine> engineProvider) {
+    public ModelController(ObjectProvider<OntologyModelEngine> engineProvider,
+                           ModelMaterializeService materializeService) {
         this.engine = engineProvider.getIfAvailable();
+        this.materializeService = materializeService;
     }
 
     private static <T> ResponseEntity<Result<T>> unavailable() {
@@ -120,6 +128,26 @@ public class ModelController {
                 danglingRefs,
                 report.hasErrors(),
                 report.issues())));
+    }
+
+    /**
+     * 建模预览（阶段一）：只读模型快照，生成表设计 DDL、draw.io ER 图与一次性确认令牌。
+     * <p>此端点<b>绝不写库</b>；用户审阅设计后须调用 confirm 端点并二次确认。</p>
+     */
+    @org.springframework.web.bind.annotation.PostMapping("/materialize/preview")
+    @RequiresRole(1)
+    public Result<MaterializePreviewVO> preview(@org.springframework.web.bind.annotation.RequestBody MaterializeRequest request) {
+        return Result.success(materializeService.preview(request));
+    }
+
+    /**
+     * 确认建表（阶段二）：令牌 + 确认短语 + aliases + 模型指纹四重校验通过后才执行建表。
+     * <p>需主任权限（role_level=0）。</p>
+     */
+    @org.springframework.web.bind.annotation.PostMapping("/materialize/confirm")
+    @RequiresRole(0)
+    public Result<MaterializeResultVO> confirm(@org.springframework.web.bind.annotation.RequestBody MaterializeConfirmRequest request) {
+        return Result.success(materializeService.confirm(request));
     }
 
     private static int count(IntegrityReport report, String code) {
